@@ -3,9 +3,9 @@
     "step": {
       "user": {
         "title": "Connect to Felicity Solar Cloud",
-        "description": "Enter your Felicity Solar (Fsolar app) account credentials.",
+        "description": "Enter your Felicity Solar (Fsolar app) account credentials. Login can be Email, Phone number (as registered), or Username.",
         "data": {
-          "username": "Email / Username",
+          "username": "Email / Phone / Username",
           "password": "Password"
         }
       },
@@ -20,14 +20,17 @@
         "title": "Re-authenticate Felicity ESS",
         "description": "Your Felicity Solar session has expired. Please enter your credentials again.",
         "data": {
-          "username": "Email / Username",
+          "username": "Email / Phone / Username",
           "password": "Password"
         }
       }
     },
     "error": {
       "cannot_connect": "Failed to connect to Felicity Solar cloud service.",
-      "invalid_auth": "Invalid username or password.",
+      "user_not_found": "Account not found. If you registered in Fsolar with a mobile phone, enter that number (with or without country code).",
+      "invalid_password": "Wrong account password. Please verify your Fsolar password.",
+      "rsa_error": "Encryption error occurred while preparing credentials. Please try again.",
+      "invalid_auth": "Authentication failed. Please check your credentials.",
       "no_plants": "No solar plants found on this account.",
       "unknown": "Unexpected error occurred."
     },

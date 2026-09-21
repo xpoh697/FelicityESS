@@ -32,6 +32,11 @@ class FelicityError(Exception):
 class FelicityAuthError(FelicityError):
     """Authentication failed or token expired."""
 
+    def __init__(self, message: str, code: int | None = None) -> None:
+        """Initialize auth error with optional server error code."""
+        super().__init__(message)
+        self.code = code
+
 
 class FelicityConnectionError(FelicityError):
     """Connection or timeout error."""
@@ -39,6 +44,11 @@ class FelicityConnectionError(FelicityError):
 
 class FelicityApiError(FelicityError):
     """API returned an error code."""
+
+    def __init__(self, message: str, code: int | None = None) -> None:
+        """Initialize API error with code."""
+        super().__init__(message)
+        self.code = code
 
 
 def encrypt_password(password: str) -> str:
@@ -68,7 +78,7 @@ class FelicityApiClient:
     ) -> None:
         """Initialize the API client."""
         self._session = session
-        self._username = username
+        self._username = username.strip()
         self._password = password
         self._base_url = base_url.rstrip("/")
         self._token: str | None = None
@@ -105,11 +115,11 @@ class FelicityApiClient:
     async def _login_unlocked(self) -> str:
         """Internal login implementation holding the lock."""
         encrypted_pwd = encrypt_password(self._password)
+        # In Fsolar w4/j.p: only userName, password, version are sent when registrationId is empty
         payload = {
             "userName": self._username,
             "password": encrypted_pwd,
             "version": "1.0",
-            "registrationId": "",
         }
         url = f"{self._base_url}{API_PATH_LOGIN}"
 
@@ -137,10 +147,19 @@ class FelicityApiClient:
 
         code = data.get("code")
         if code != 200:
-            msg = data.get("msg") or "Authentication failed"
-            raise FelicityAuthError(f"Login failed (code {code}): {msg}")
+            msg = data.get("message") or data.get("msg") or "Authentication failed"
+            _LOGGER.warning(
+                "Felicity authentication failed for '%s' (code %s): %s",
+                self._username,
+                code,
+                msg,
+            )
+            raise FelicityAuthError(str(msg), code=code)
 
-        user_data = data.get("data", {})
+        user_data = data.get("data")
+        if not isinstance(user_data, dict):
+            raise FelicityAuthError(f"Unexpected user login response format: {user_data}")
+
         token = user_data.get("token")
         if not token:
             raise FelicityAuthError("API response did not contain an auth token")
@@ -211,10 +230,10 @@ class FelicityApiClient:
             )
 
         if code != 200:
-            msg = body.get("msg") or f"API error code {code}"
+            msg = body.get("message") or body.get("msg") or f"API error code {code}"
             if code in (3001, 401):
-                raise FelicityAuthError(f"Unauthorized: {msg}")
-            raise FelicityApiError(f"API call to {path} returned code {code}: {msg}")
+                raise FelicityAuthError(str(msg), code=code)
+            raise FelicityApiError(f"API call to {path} returned code {code}: {msg}", code=code)
 
         return body.get("data")
 

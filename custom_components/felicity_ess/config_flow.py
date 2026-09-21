@@ -32,6 +32,17 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 
+def map_auth_error(err: FelicityAuthError) -> str:
+    """Map API error code to translation key."""
+    if err.code == 1002001:
+        return "user_not_found"
+    if err.code == 1002002:
+        return "invalid_password"
+    if err.code == 10010027:
+        return "rsa_error"
+    return "invalid_auth"
+
+
 class FelicityConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Felicity Solar ESS."""
 
@@ -59,8 +70,9 @@ class FelicityConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             try:
                 await client.login()
                 plants = await client.get_plants()
-            except FelicityAuthError:
-                errors["base"] = "invalid_auth"
+            except FelicityAuthError as err:
+                _LOGGER.warning("Felicity login failed for '%s': %s (code %s)", username, err, err.code)
+                errors["base"] = map_auth_error(err)
             except (FelicityConnectionError, FelicityError):
                 errors["base"] = "cannot_connect"
             except Exception:  # pylint: disable=broad-except
@@ -167,8 +179,9 @@ class FelicityConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             try:
                 await client.login()
-            except FelicityAuthError:
-                errors["base"] = "invalid_auth"
+            except FelicityAuthError as err:
+                _LOGGER.warning("Felicity reauth failed: %s (code %s)", err, err.code)
+                errors["base"] = map_auth_error(err)
             except Exception:  # pylint: disable=broad-except
                 errors["base"] = "cannot_connect"
             else:
