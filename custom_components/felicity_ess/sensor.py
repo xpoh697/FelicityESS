@@ -585,9 +585,10 @@ class FelicityLocalBatterySensor(CoordinatorEntity[FelicityLocalCoordinator], Se
         self._attr_unique_id = f"local_{device_sn}_{description.key}"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, device_sn)},
-            name=f"Felicity Battery ({device_sn})",
+            name="Felicity Battery",
             manufacturer=MANUFACTURER,
             model=device_model,
+            serial_number=device_sn,
         )
 
     @property
@@ -623,9 +624,10 @@ class FelicityLocalCellVoltageSensor(CoordinatorEntity[FelicityLocalCoordinator]
         self._attr_translation_placeholders = {"index": str(cell_index)}
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, device_sn)},
-            name=f"Felicity Battery ({device_sn})",
+            name="Felicity Battery",
             manufacturer=MANUFACTURER,
             model=device_model,
+            serial_number=device_sn,
         )
 
     @property

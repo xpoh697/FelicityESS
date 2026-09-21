@@ -101,9 +101,10 @@ class FelicityLocalBatteryOnlineBinarySensor(
         self._attr_unique_id = f"local_{device_sn}_battery_online"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, device_sn)},
-            name=f"Felicity Battery ({device_sn})",
+            name="Felicity Battery",
             manufacturer=MANUFACTURER,
             model=device_model,
+            serial_number=device_sn,
         )
 
     @property
@@ -134,9 +135,10 @@ class FelicityLocalBatteryProblemBinarySensor(
         self._attr_unique_id = f"local_{device_sn}_battery_problem"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, device_sn)},
-            name=f"Felicity Battery ({device_sn})",
+            name="Felicity Battery",
             manufacturer=MANUFACTURER,
             model=device_model,
+            serial_number=device_sn,
         )
 
     @property
