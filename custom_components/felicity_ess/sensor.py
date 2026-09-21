@@ -153,7 +153,6 @@ LOCAL_BATTERY_SENSORS: tuple[FelicitySensorEntityDescription, ...] = (
         translation_key="max_cell_number",
         name="Max Cell Number",
         entity_category=EntityCategory.DIAGNOSTIC,
-        entity_registry_enabled_default=False,
         value_fn=lambda d: d.get("max_cell_number"),
     ),
     FelicitySensorEntityDescription(
@@ -161,7 +160,6 @@ LOCAL_BATTERY_SENSORS: tuple[FelicitySensorEntityDescription, ...] = (
         translation_key="min_cell_number",
         name="Min Cell Number",
         entity_category=EntityCategory.DIAGNOSTIC,
-        entity_registry_enabled_default=False,
         value_fn=lambda d: d.get("min_cell_number"),
     ),
     FelicitySensorEntityDescription(
@@ -194,7 +192,6 @@ LOCAL_BATTERY_SENSORS: tuple[FelicitySensorEntityDescription, ...] = (
             native_unit_of_measurement=UnitOfTemperature.CELSIUS,
             state_class=SensorStateClass.MEASUREMENT,
             entity_category=EntityCategory.DIAGNOSTIC,
-            entity_registry_enabled_default=False,
             value_fn=lambda d, idx=i + 1: d.get(f"temperature_{idx}"),
         )
         for i in range(4)
@@ -206,7 +203,6 @@ LOCAL_BATTERY_SENSORS: tuple[FelicitySensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.VOLTAGE,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         entity_category=EntityCategory.DIAGNOSTIC,
-        entity_registry_enabled_default=False,
         value_fn=lambda d: d.get("charge_voltage_limit"),
     ),
     FelicitySensorEntityDescription(
@@ -216,7 +212,6 @@ LOCAL_BATTERY_SENSORS: tuple[FelicitySensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.VOLTAGE,
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         entity_category=EntityCategory.DIAGNOSTIC,
-        entity_registry_enabled_default=False,
         value_fn=lambda d: d.get("discharge_voltage_limit"),
     ),
     FelicitySensorEntityDescription(
@@ -226,7 +221,6 @@ LOCAL_BATTERY_SENSORS: tuple[FelicitySensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.CURRENT,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         entity_category=EntityCategory.DIAGNOSTIC,
-        entity_registry_enabled_default=False,
         value_fn=lambda d: d.get("charge_current_limit"),
     ),
     FelicitySensorEntityDescription(
@@ -236,7 +230,6 @@ LOCAL_BATTERY_SENSORS: tuple[FelicitySensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.CURRENT,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         entity_category=EntityCategory.DIAGNOSTIC,
-        entity_registry_enabled_default=False,
         value_fn=lambda d: d.get("discharge_current_limit"),
     ),
     FelicitySensorEntityDescription(
@@ -245,7 +238,6 @@ LOCAL_BATTERY_SENSORS: tuple[FelicitySensorEntityDescription, ...] = (
         name="Device Time",
         device_class=SensorDeviceClass.TIMESTAMP,
         entity_category=EntityCategory.DIAGNOSTIC,
-        entity_registry_enabled_default=False,
         value_fn=lambda d: d.get("device_timestamp"),
     ),
     *(
@@ -254,7 +246,6 @@ LOCAL_BATTERY_SENSORS: tuple[FelicitySensorEntityDescription, ...] = (
             translation_key=key,
             name=key.replace("_", " ").title(),
             entity_category=EntityCategory.DIAGNOSTIC,
-            entity_registry_enabled_default=False,
             value_fn=lambda d, k=key: d.get(k),
         )
         for key in ("estate", "state", "fault", "warning", "bms_fault", "bms_warning")
@@ -516,7 +507,7 @@ async def async_setup_entry(
         for desc in LOCAL_BATTERY_SENSORS:
             entities.append(FelicityLocalBatterySensor(coordinator, desc, dev_sn, model))
 
-        # 16 Individual cell voltages (disabled by default in entity registry)
+        # 16 Individual cell voltages (enabled by default in entity registry)
         for cell_idx in range(1, 17):
             entities.append(
                 FelicityLocalCellVoltageSensor(coordinator, dev_sn, model, cell_idx)
@@ -614,7 +605,6 @@ class FelicityLocalCellVoltageSensor(CoordinatorEntity[FelicityLocalCoordinator]
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_suggested_display_precision = 3
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_entity_registry_enabled_default = False
 
     def __init__(
         self,
@@ -642,7 +632,10 @@ class FelicityLocalCellVoltageSensor(CoordinatorEntity[FelicityLocalCoordinator]
     def native_value(self) -> float | None:
         """Return cell voltage."""
         parsed = self.coordinator.data.get("parsed", {})
-        return parsed.get(f"cell_{self._cell_index}_voltage")
+        val = parsed.get(f"cell_{self._cell_index}_voltage")
+        if val is None or val <= 0 or val > 10.0:
+            return None
+        return val
 
 
 # =========================================================================
@@ -723,7 +716,6 @@ class FelicityCellVoltageSensor(CoordinatorEntity[FelicityDataUpdateCoordinator]
     _attr_native_unit_of_measurement = UnitOfElectricPotential.VOLT
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_entity_registry_enabled_default = False
 
     def __init__(
         self,
@@ -763,7 +755,6 @@ class FelicityCellTemperatureSensor(CoordinatorEntity[FelicityDataUpdateCoordina
     _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_entity_registry_enabled_default = False
 
     def __init__(
         self,
