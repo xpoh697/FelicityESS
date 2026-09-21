@@ -1,0 +1,12 @@
+{
+  "domain": "felicity_ess",
+  "name": "Felicity Solar ESS",
+  "codeowners": ["@xpoh697"],
+  "config_flow": true,
+  "documentation": "https://github.com/xpoh697/FelicityESS",
+  "issue_tracker": "https://github.com/xpoh697/FelicityESS/issues",
+  "integration_type": "hub",
+  "iot_class": "cloud_polling",
+  "requirements": ["cryptography>=41.0.0"],
+  "version": "1.0.0"
+}

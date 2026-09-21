@@ -1,0 +1,82 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Felicity Solar Cloud",
+        "description": "Enter your Felicity Solar (Fsolar app) account credentials.",
+        "data": {
+          "username": "Email / Username",
+          "password": "Password"
+        }
+      },
+      "plant": {
+        "title": "Select Solar Plant",
+        "description": "Choose the solar power plant / installation to monitor.",
+        "data": {
+          "plant_id": "Solar Plant"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate Felicity ESS",
+        "description": "Your Felicity Solar session has expired. Please enter your credentials again.",
+        "data": {
+          "username": "Email / Username",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to Felicity Solar cloud service.",
+      "invalid_auth": "Invalid username or password.",
+      "no_plants": "No solar plants found on this account.",
+      "unknown": "Unexpected error occurred."
+    },
+    "abort": {
+      "already_configured": "This Felicity ESS plant is already configured.",
+      "reauth_successful": "Re-authentication was successful."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Felicity ESS Settings",
+        "description": "Configure telemetry update parameters.",
+        "data": {
+          "scan_interval": "Update interval (seconds, 15 - 300)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "pv_power": { "name": "Solar PV Power" },
+      "feed_power": { "name": "Grid Feed-in Power" },
+      "load_power": { "name": "Home Load Power" },
+      "total_pv_energy_today": { "name": "Solar Generation Today" },
+      "total_load_energy_today": { "name": "Load Consumption Today" },
+      "soc": { "name": "State of Charge" },
+      "soh": { "name": "State of Health" },
+      "voltage": { "name": "Voltage" },
+      "current": { "name": "Current" },
+      "power": { "name": "Power" },
+      "capacity": { "name": "Capacity" },
+      "bms_charge_current_limit": { "name": "BMS Charge Current Limit" },
+      "bms_discharge_current_limit": { "name": "BMS Discharge Current Limit" },
+      "bms_charge_voltage_limit": { "name": "BMS Charge Voltage Limit" },
+      "bms_discharge_voltage_limit": { "name": "BMS Discharge Voltage Limit" },
+      "today_battery_charge": { "name": "Energy Charged Today" },
+      "today_battery_discharge": { "name": "Energy Discharged Today" },
+      "max_cell_voltage": { "name": "Max Cell Voltage" },
+      "min_cell_voltage": { "name": "Min Cell Voltage" },
+      "max_cell_voltage_num": { "name": "Max Cell Voltage Number" },
+      "min_cell_voltage_num": { "name": "Min Cell Voltage Number" },
+      "max_cell_temperature": { "name": "Max Cell Temperature" },
+      "min_cell_temperature": { "name": "Min Cell Temperature" }
+    },
+    "binary_sensor": {
+      "plant_online": { "name": "Plant Online" },
+      "battery_online": { "name": "Battery Online" },
+      "battery_problem": { "name": "Battery Alarm" }
+    }
+  }
+}
