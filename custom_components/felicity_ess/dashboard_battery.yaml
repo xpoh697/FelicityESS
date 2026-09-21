@@ -22,7 +22,7 @@
 #
 # ИНСТРУКЦИЯ ПО НАСТРОЙКЕ ИМЕН СЕНСОРОВ:
 # Если ваши сенсоры в Home Assistant созданы с суффиксом серийного номера
-# (например, sensor.felicity_battery_100011002424520070_075704831426060274_soc вместо sensor.felicity_battery_100011002424520070_soc),
+# (например, sensor.felicity_battery_100011002424520070_state_of_charge вместо sensor.felicity_battery_100011002424520070_state_of_charge),
 # используйте функцию "Поиск и замена" (Ctrl+H) в вашем редакторе и замените:
 # Найти:    sensor.felicity_battery_100011002424520070_
 # Заменить: sensor.felicity_battery_100011002424520070_<ВАШ_СЕРИЙНЫЙ_НОМЕР>_
@@ -73,21 +73,21 @@ views:
                   {{ 'Онлайн' if is_state('binary_sensor.felicity_battery_100011002424520070_battery_online', 'on') else 'Офлайн' }}
 
               - type: template
-                entity: sensor.felicity_battery_100011002424520070_charging_state
+                entity: sensor.felicity_battery_100011002424520070_state
                 icon: >
-                  {% set s = states('sensor.felicity_battery_100011002424520070_charging_state') %}
+                  {% set s = states('sensor.felicity_battery_100011002424520070_state') %}
                   {% if s == 'charging' %} mdi:battery-charging
                   {% elif s == 'discharging' %} mdi:battery-charging-low
                   {% else %} mdi:battery-clock
                   {% endif %}
                 icon_color: >
-                  {% set s = states('sensor.felicity_battery_100011002424520070_charging_state') %}
+                  {% set s = states('sensor.felicity_battery_100011002424520070_state') %}
                   {% if s == 'charging' %} green
                   {% elif s == 'discharging' %} orange
                   {% else %} blue
                   {% endif %}
                 content: >
-                  {% set s = states('sensor.felicity_battery_100011002424520070_charging_state') %}
+                  {% set s = states('sensor.felicity_battery_100011002424520070_state') %}
                   {% if s == 'charging' %} Зарядка
                   {% elif s == 'discharging' %} Разрядка
                   {% else %} Ожидание
@@ -105,15 +105,15 @@ views:
                 content: "{{ states('sensor.felicity_battery_100011002424520070_power') }} Вт"
 
               - type: template
-                entity: sensor.felicity_battery_100011002424520070_temperature_max
+                entity: sensor.felicity_battery_100011002424520070_max_cell_temperature
                 icon: mdi:thermometer
                 icon_color: >
-                  {% set t = states('sensor.felicity_battery_100011002424520070_temperature_max') | float(25) %}
+                  {% set t = states('sensor.felicity_battery_100011002424520070_max_cell_temperature') | float(25) %}
                   {% if t > 40 %} red
                   {% elif t > 30 %} orange
                   {% else %} green
                   {% endif %}
-                content: "{{ states('sensor.felicity_battery_100011002424520070_temperature_max') }} °C"
+                content: "{{ states('sensor.felicity_battery_100011002424520070_max_cell_temperature') }} °C"
 
               - type: template
                 entity: sensor.felicity_battery_100011002424520070_cycle_count
@@ -125,13 +125,13 @@ views:
           # 3. Главный индикатор заряда (Hero SOC Card)
           # ----------------------------------------------------------------------
           - type: custom:mushroom-template-card
-            primary: "Уровень заряда: {{ states('sensor.felicity_battery_100011002424520070_soc') }}%"
+            primary: "Уровень заряда: {{ states('sensor.felicity_battery_100011002424520070_state_of_charge') }}%"
             secondary: >
-              SOH: {{ states('sensor.felicity_battery_100011002424520070_soh') }}% |
+              SOH: {{ states('sensor.felicity_battery_100011002424520070_state_of_health') }}% |
               Емкость: {{ states('sensor.felicity_battery_100011002424520070_capacity') }} А·ч
             icon: >
-              {% set soc = states('sensor.felicity_battery_100011002424520070_soc') | float(50) %}
-              {% set state = states('sensor.felicity_battery_100011002424520070_charging_state') %}
+              {% set soc = states('sensor.felicity_battery_100011002424520070_state_of_charge') | float(50) %}
+              {% set state = states('sensor.felicity_battery_100011002424520070_state') %}
               {% if state == 'charging' %}
                 mdi:battery-charging-high
               {% elif soc > 80 %}
@@ -144,8 +144,8 @@ views:
                 mdi:battery-alert
               {% endif %}
             icon_color: >
-              {% set soc = states('sensor.felicity_battery_100011002424520070_soc') | float(50) %}
-              {% set state = states('sensor.felicity_battery_100011002424520070_charging_state') %}
+              {% set soc = states('sensor.felicity_battery_100011002424520070_state_of_charge') | float(50) %}
+              {% set state = states('sensor.felicity_battery_100011002424520070_state') %}
               {% if state == 'charging' %} green
               {% elif soc > 50 %} blue
               {% elif soc > 20 %} orange
@@ -158,7 +158,7 @@ views:
             badge_color: red
             tap_action:
               action: more-info
-              entity: sensor.felicity_battery_100011002424520070_soc
+              entity: sensor.felicity_battery_100011002424520070_state_of_charge
 
           # ----------------------------------------------------------------------
           # 4. Базовые метрики пака (Напряжение, Ток, Мощность)
