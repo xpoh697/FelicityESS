@@ -44,6 +44,33 @@ Supports two connection modes:
 
 ---
 
+## 🎨 Modern Dashboard (Mushroom & Bubble Card)
+
+A ready-to-use modern YAML dashboard view is included: [`dashboard_battery.yaml`](dashboard_battery.yaml).
+
+### Highlights:
+- **Bubble Card Header & Separators**: Clean separation of pack metrics, cell balancing, cell matrix, and BMS limits.
+- **Mushroom Chips Bar**: At-a-glance online status, charging state, real-time power, max temperature, and cycle count.
+- **Dynamic Min/Max Cell Highlighting**:
+  - The cell with the **highest voltage** is dynamically highlighted in **Cyan** with an up-arrow badge (`mdi:arrow-up-bold`).
+  - The cell with the **lowest voltage** is highlighted in **Deep Orange** with a down-arrow badge (`mdi:arrow-down-bold`).
+  - Safe epsilon evaluation ensures robust color coding without float rounding artifacts.
+- **Cell Balance Delta ($\Delta V$)**: Live difference between max and min cells in millivolts (mV) with automated color-coded health status (green $\le 20$ mV, amber $20-40$ mV, red $> 40$ mV).
+
+### Prerequisites:
+Install via HACS Frontend:
+1. [Bubble Card](https://github.com/Clooos/Bubble-Card)
+2. [Mushroom Cards](https://github.com/piitaya/lovelace-mushroom)
+3. *(Optional)* [card-mod](https://github.com/thomasloven/lovelace-card-mod)
+
+### How to use:
+1. Open your Home Assistant dashboard, click the three dots in the top right, and choose **Edit Dashboard**.
+2. Click **Raw configuration editor** or add a new view.
+3. Paste the contents of [`dashboard_battery.yaml`](dashboard_battery.yaml).
+4. *(If your entities use a custom serial number suffix)*, use Search & Replace (Ctrl+H) to update the entity prefix.
+
+---
+
 ## 📦 Installation
 
 ### Option 1: HACS (Recommended)
