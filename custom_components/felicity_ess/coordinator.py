@@ -17,6 +17,14 @@ from .api import (
     FelicityError,
 )
 from .const import DOMAIN, TOPOLOGY_UPDATE_INTERVAL_CYCLES
+from .local_client import (
+    FelicityLocalClient,
+    FelicityLocalConnectionError,
+    FelicityLocalError,
+    FelicityLocalProtocolError,
+    FelicityLocalTimeoutError,
+)
+from .profiles import BatteryProfile, select_profile
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -41,8 +49,91 @@ def safe_int(value: Any, default: int | None = None) -> int | None:
         return default
 
 
+class FelicityLocalCoordinator(DataUpdateCoordinator[dict[str, Any]]):
+    """Coordinator for direct local TCP monitoring of Felicity Solar batteries."""
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        client: FelicityLocalClient,
+        host: str,
+        port: int,
+        update_interval: int,
+        invert_current: bool = False,
+        dev_sn: str = "",
+    ) -> None:
+        """Initialize the local TCP coordinator."""
+        super().__init__(
+            hass,
+            _LOGGER,
+            name=f"Felicity ESS Local ({host})",
+            update_interval=timedelta(seconds=update_interval),
+        )
+        self.client = client
+        self.host = host
+        self.port = port
+        self.invert_current = invert_current
+        self.dev_sn = dev_sn
+        self.profile: BatteryProfile | None = None
+        self._tz_offset_minutes: int | None = None
+
+    async def _async_update_data(self) -> dict[str, Any]:
+        """Fetch telemetry from the battery via local TCP."""
+        try:
+            # Query timezone offset once per coordinator lifecycle (best-effort)
+            if self._tz_offset_minutes is None:
+                try:
+                    self._tz_offset_minutes = await self.client.async_get_timezone_offset_minutes()
+                except Exception as err:
+                    _LOGGER.debug("Could not fetch device timezone offset from %s: %s", self.host, err)
+
+            raw = await self.client.async_get_data()
+
+            if self._tz_offset_minutes is not None:
+                raw["timeZMin"] = self._tz_offset_minutes
+
+            if self.profile is None:
+                self.profile = select_profile(raw)
+                _LOGGER.info(
+                    "Selected profile '%s' (confidence: %s) for battery at %s",
+                    self.profile.name,
+                    self.profile.confidence,
+                    self.host,
+                )
+
+            parsed = self.profile.parse(raw)
+
+            # Invert current sign if requested
+            if self.invert_current and parsed.get("current") is not None:
+                parsed["current"] = -parsed["current"]
+                if parsed.get("power") is not None and parsed.get("voltage") is not None:
+                    parsed["power"] = round(parsed["voltage"] * parsed["current"], 1)
+
+            sn = parsed.get("serial_number") or raw.get("DevSN") or raw.get("wifiSN")
+            if sn and not self.dev_sn:
+                self.dev_sn = str(sn)
+
+            return {
+                "parsed": parsed,
+                "raw": raw,
+                "profile_name": self.profile.name,
+                "serial_number": self.dev_sn or self.host,
+            }
+
+        except FelicityLocalTimeoutError as err:
+            raise UpdateFailed(f"Timeout communicating with battery at {self.host}:{self.port}") from err
+        except FelicityLocalConnectionError as err:
+            raise UpdateFailed(f"Connection failed to battery at {self.host}:{self.port}: {err}") from err
+        except FelicityLocalProtocolError as err:
+            raise UpdateFailed(f"Protocol error from battery at {self.host}:{self.port}: {err}") from err
+        except FelicityLocalError as err:
+            raise UpdateFailed(f"Error communicating with battery at {self.host}:{self.port}: {err}") from err
+        except Exception as err:
+            raise UpdateFailed(f"Unexpected error updating Felicity local battery: {err}") from err
+
+
 class FelicityDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
-    """Coordinator to manage fetching Felicity Solar telemetry data."""
+    """Coordinator to manage fetching Felicity Solar telemetry data from Cloud API."""
 
     def __init__(
         self,
@@ -52,7 +143,7 @@ class FelicityDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         plant_name: str,
         update_interval: int,
     ) -> None:
-        """Initialize the coordinator."""
+        """Initialize the cloud coordinator."""
         super().__init__(
             hass,
             _LOGGER,

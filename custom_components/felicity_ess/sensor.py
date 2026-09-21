@@ -31,7 +31,12 @@ from .const import (
     DOMAIN,
     MANUFACTURER,
 )
-from .coordinator import FelicityDataUpdateCoordinator, safe_float, safe_int
+from .coordinator import (
+    FelicityDataUpdateCoordinator,
+    FelicityLocalCoordinator,
+    safe_float,
+    safe_int,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -43,7 +48,224 @@ class FelicitySensorEntityDescription(SensorEntityDescription):
     value_fn: Callable[[dict[str, Any]], Any]
 
 
-# Plant / System wide sensors
+# =========================================================================
+# Local TCP Sensors
+# =========================================================================
+
+LOCAL_BATTERY_SENSORS: tuple[FelicitySensorEntityDescription, ...] = (
+    FelicitySensorEntityDescription(
+        key="voltage",
+        translation_key="voltage",
+        name="Voltage",
+        device_class=SensorDeviceClass.VOLTAGE,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=2,
+        value_fn=lambda d: d.get("voltage"),
+    ),
+    FelicitySensorEntityDescription(
+        key="current",
+        translation_key="current",
+        name="Current",
+        device_class=SensorDeviceClass.CURRENT,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=1,
+        value_fn=lambda d: d.get("current"),
+    ),
+    FelicitySensorEntityDescription(
+        key="power",
+        translation_key="power",
+        name="Power",
+        device_class=SensorDeviceClass.POWER,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=0,
+        value_fn=lambda d: d.get("power"),
+    ),
+    FelicitySensorEntityDescription(
+        key="charging_state",
+        translation_key="charging_state",
+        name="State",
+        device_class=SensorDeviceClass.ENUM,
+        options=["charging", "discharging", "standby"],
+        value_fn=lambda d: d.get("charging_state"),
+    ),
+    FelicitySensorEntityDescription(
+        key="soc",
+        translation_key="soc",
+        name="State of Charge",
+        device_class=SensorDeviceClass.BATTERY,
+        native_unit_of_measurement=PERCENTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda d: d.get("soc"),
+    ),
+    FelicitySensorEntityDescription(
+        key="soh",
+        translation_key="soh",
+        name="State of Health",
+        native_unit_of_measurement=PERCENTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("soh"),
+    ),
+    FelicitySensorEntityDescription(
+        key="capacity",
+        translation_key="capacity",
+        name="Capacity",
+        native_unit_of_measurement="Ah",
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("capacity"),
+    ),
+    FelicitySensorEntityDescription(
+        key="cycle_count",
+        translation_key="cycle_count",
+        name="Cycle Count",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("cycle_count"),
+    ),
+    FelicitySensorEntityDescription(
+        key="max_cell_voltage",
+        translation_key="max_cell_voltage",
+        name="Max Cell Voltage",
+        device_class=SensorDeviceClass.VOLTAGE,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=3,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("max_cell_voltage"),
+    ),
+    FelicitySensorEntityDescription(
+        key="min_cell_voltage",
+        translation_key="min_cell_voltage",
+        name="Min Cell Voltage",
+        device_class=SensorDeviceClass.VOLTAGE,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=3,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("min_cell_voltage"),
+    ),
+    FelicitySensorEntityDescription(
+        key="max_cell_number",
+        translation_key="max_cell_number",
+        name="Max Cell Number",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+        value_fn=lambda d: d.get("max_cell_number"),
+    ),
+    FelicitySensorEntityDescription(
+        key="min_cell_number",
+        translation_key="min_cell_number",
+        name="Min Cell Number",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+        value_fn=lambda d: d.get("min_cell_number"),
+    ),
+    FelicitySensorEntityDescription(
+        key="temperature_max",
+        translation_key="temperature_max",
+        name="Max Cell Temperature",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("temperature_max"),
+    ),
+    FelicitySensorEntityDescription(
+        key="temperature_min",
+        translation_key="temperature_min",
+        name="Min Cell Temperature",
+        device_class=SensorDeviceClass.TEMPERATURE,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        state_class=SensorStateClass.MEASUREMENT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        value_fn=lambda d: d.get("temperature_min"),
+    ),
+    *(
+        FelicitySensorEntityDescription(
+            key=f"temperature_{i + 1}",
+            translation_key="temperature",
+            translation_placeholders={"index": str(i + 1)},
+            name=f"Temperature {i + 1}",
+            device_class=SensorDeviceClass.TEMPERATURE,
+            native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+            state_class=SensorStateClass.MEASUREMENT,
+            entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,
+            value_fn=lambda d, idx=i + 1: d.get(f"temperature_{idx}"),
+        )
+        for i in range(4)
+    ),
+    FelicitySensorEntityDescription(
+        key="charge_voltage_limit",
+        translation_key="charge_voltage_limit",
+        name="Charge Voltage Limit",
+        device_class=SensorDeviceClass.VOLTAGE,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+        value_fn=lambda d: d.get("charge_voltage_limit"),
+    ),
+    FelicitySensorEntityDescription(
+        key="discharge_voltage_limit",
+        translation_key="discharge_voltage_limit",
+        name="Discharge Voltage Limit",
+        device_class=SensorDeviceClass.VOLTAGE,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+        value_fn=lambda d: d.get("discharge_voltage_limit"),
+    ),
+    FelicitySensorEntityDescription(
+        key="charge_current_limit",
+        translation_key="charge_current_limit",
+        name="Charge Current Limit",
+        device_class=SensorDeviceClass.CURRENT,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+        value_fn=lambda d: d.get("charge_current_limit"),
+    ),
+    FelicitySensorEntityDescription(
+        key="discharge_current_limit",
+        translation_key="discharge_current_limit",
+        name="Discharge Current Limit",
+        device_class=SensorDeviceClass.CURRENT,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+        value_fn=lambda d: d.get("discharge_current_limit"),
+    ),
+    FelicitySensorEntityDescription(
+        key="device_timestamp",
+        translation_key="device_timestamp",
+        name="Device Time",
+        device_class=SensorDeviceClass.TIMESTAMP,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False,
+        value_fn=lambda d: d.get("device_timestamp"),
+    ),
+    *(
+        FelicitySensorEntityDescription(
+            key=key,
+            translation_key=key,
+            name=key.replace("_", " ").title(),
+            entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,
+            value_fn=lambda d, k=key: d.get(k),
+        )
+        for key in ("estate", "state", "fault", "warning", "bms_fault", "bms_warning")
+    ),
+)
+
+
+# =========================================================================
+# Cloud REST API Sensors
+# =========================================================================
+
 PLANT_SENSORS: tuple[FelicitySensorEntityDescription, ...] = (
     FelicitySensorEntityDescription(
         key="pv_power",
@@ -107,9 +329,7 @@ PLANT_SENSORS: tuple[FelicitySensorEntityDescription, ...] = (
     ),
 )
 
-
-# Battery specific sensor descriptions
-BATTERY_SENSORS: tuple[FelicitySensorEntityDescription, ...] = (
+CLOUD_BATTERY_SENSORS: tuple[FelicitySensorEntityDescription, ...] = (
     FelicitySensorEntityDescription(
         key="soc",
         translation_key="soc",
@@ -283,16 +503,36 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Felicity ESS sensors based on a config entry."""
-    coordinator: FelicityDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
+    entry_data = hass.data[DOMAIN][entry.entry_id]
+    coordinator = entry_data["coordinator"]
 
     entities: list[SensorEntity] = []
+
+    # Local TCP mode
+    if isinstance(coordinator, FelicityLocalCoordinator):
+        dev_sn = coordinator.dev_sn or coordinator.host
+        model = coordinator.profile.name if coordinator.profile else "Felicity Solar Battery"
+
+        for desc in LOCAL_BATTERY_SENSORS:
+            entities.append(FelicityLocalBatterySensor(coordinator, desc, dev_sn, model))
+
+        # 16 Individual cell voltages (disabled by default in entity registry)
+        for cell_idx in range(1, 17):
+            entities.append(
+                FelicityLocalCellVoltageSensor(coordinator, dev_sn, model, cell_idx)
+            )
+
+        async_add_entities(entities)
+        return
+
+    # Cloud mode
+    assert isinstance(coordinator, FelicityDataUpdateCoordinator)
 
     # 1. Add plant-level sensors
     for desc in PLANT_SENSORS:
         entities.append(FelicityPlantSensor(coordinator, desc))
 
     # 2. Add battery-level sensors
-    # Find batteries from coordinator devices or default to plant battery
     devices = coordinator.devices
     battery_devices = [
         dev for dev in devices.values() if dev.get("deviceType") == DEVICE_TYPE_BATTERY
@@ -302,25 +542,21 @@ async def async_setup_entry(
         for b_dev in battery_devices:
             sn = str(b_dev.get("deviceSn"))
             model = b_dev.get("deviceModel", "Felicity Battery")
-            for desc in BATTERY_SENSORS:
+            for desc in CLOUD_BATTERY_SENSORS:
                 entities.append(FelicityBatterySensor(coordinator, desc, sn, model))
 
-            # Add individual cell voltage sensors 1..16 (disabled by default)
             for cell_idx in range(1, 17):
                 entities.append(
                     FelicityCellVoltageSensor(coordinator, sn, model, cell_idx)
                 )
-
-            # Add cell temperature sensors 1..4 (disabled by default)
             for temp_idx in range(1, 5):
                 entities.append(
                     FelicityCellTemperatureSensor(coordinator, sn, model, temp_idx)
                 )
     else:
-        # If devices list doesn't explicitly return battery separately, attach to plant battery
         default_sn = f"battery_{coordinator.plant_id}"
         default_model = "Felicity Solar Battery"
-        for desc in BATTERY_SENSORS:
+        for desc in CLOUD_BATTERY_SENSORS:
             entities.append(FelicityBatterySensor(coordinator, desc, default_sn, default_model))
 
         for cell_idx in range(1, 17):
@@ -335,8 +571,86 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
+# =========================================================================
+# Local Entity Classes
+# =========================================================================
+
+class FelicityLocalBatterySensor(CoordinatorEntity[FelicityLocalCoordinator], SensorEntity):
+    """Sensor for a Felicity battery monitored via direct local TCP."""
+
+    entity_description: FelicitySensorEntityDescription
+
+    def __init__(
+        self,
+        coordinator: FelicityLocalCoordinator,
+        description: FelicitySensorEntityDescription,
+        device_sn: str,
+        device_model: str,
+    ) -> None:
+        """Initialize local battery sensor."""
+        super().__init__(coordinator)
+        self.entity_description = description
+        self._device_sn = device_sn
+        self._attr_unique_id = f"local_{device_sn}_{description.key}"
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, device_sn)},
+            name=f"Felicity Battery ({device_sn})",
+            manufacturer=MANUFACTURER,
+            model=device_model,
+        )
+
+    @property
+    def native_value(self) -> Any:
+        """Return the state of the sensor."""
+        parsed = self.coordinator.data.get("parsed", {})
+        return self.entity_description.value_fn(parsed)
+
+
+class FelicityLocalCellVoltageSensor(CoordinatorEntity[FelicityLocalCoordinator], SensorEntity):
+    """Sensor for individual cell voltage over direct local TCP."""
+
+    _attr_device_class = SensorDeviceClass.VOLTAGE
+    _attr_native_unit_of_measurement = UnitOfElectricPotential.VOLT
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_suggested_display_precision = 3
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
+    _attr_entity_registry_enabled_default = False
+
+    def __init__(
+        self,
+        coordinator: FelicityLocalCoordinator,
+        device_sn: str,
+        device_model: str,
+        cell_index: int,
+    ) -> None:
+        """Initialize local cell voltage sensor."""
+        super().__init__(coordinator)
+        self._device_sn = device_sn
+        self._cell_index = cell_index
+        self._attr_unique_id = f"local_{device_sn}_cell_{cell_index}_voltage"
+        self._attr_name = f"Cell {cell_index} Voltage"
+        self._attr_translation_key = "cell_voltage"
+        self._attr_translation_placeholders = {"index": str(cell_index)}
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, device_sn)},
+            name=f"Felicity Battery ({device_sn})",
+            manufacturer=MANUFACTURER,
+            model=device_model,
+        )
+
+    @property
+    def native_value(self) -> float | None:
+        """Return cell voltage."""
+        parsed = self.coordinator.data.get("parsed", {})
+        return parsed.get(f"cell_{self._cell_index}_voltage")
+
+
+# =========================================================================
+# Cloud Entity Classes
+# =========================================================================
+
 class FelicityPlantSensor(CoordinatorEntity[FelicityDataUpdateCoordinator], SensorEntity):
-    """Sensor for plant-wide PV and load telemetry."""
+    """Sensor for plant-wide PV and load telemetry (Cloud)."""
 
     entity_description: FelicitySensorEntityDescription
 
@@ -363,7 +677,7 @@ class FelicityPlantSensor(CoordinatorEntity[FelicityDataUpdateCoordinator], Sens
 
 
 class FelicityBatterySensor(CoordinatorEntity[FelicityDataUpdateCoordinator], SensorEntity):
-    """Sensor for a Felicity battery pack."""
+    """Sensor for a Felicity battery pack (Cloud)."""
 
     entity_description: FelicitySensorEntityDescription
 
@@ -389,9 +703,7 @@ class FelicityBatterySensor(CoordinatorEntity[FelicityDataUpdateCoordinator], Se
 
     def _get_battery_data(self) -> dict[str, Any]:
         """Extract battery dict for this device."""
-        # Check in coordinator devices
         dev = self.coordinator.devices.get(self._device_sn, {})
-        # Merge with plant battery details
         details = self.coordinator.data.get("battery_details", {})
         merged = dict(details)
         merged.update(dev)
@@ -405,13 +717,13 @@ class FelicityBatterySensor(CoordinatorEntity[FelicityDataUpdateCoordinator], Se
 
 
 class FelicityCellVoltageSensor(CoordinatorEntity[FelicityDataUpdateCoordinator], SensorEntity):
-    """Sensor for individual battery cell voltage."""
+    """Sensor for individual battery cell voltage (Cloud)."""
 
     _attr_device_class = SensorDeviceClass.VOLTAGE
     _attr_native_unit_of_measurement = UnitOfElectricPotential.VOLT
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_entity_registry_enabled_default = False  # Disabled by default as agreed in debate
+    _attr_entity_registry_enabled_default = False
 
     def __init__(
         self,
@@ -445,13 +757,13 @@ class FelicityCellVoltageSensor(CoordinatorEntity[FelicityDataUpdateCoordinator]
 
 
 class FelicityCellTemperatureSensor(CoordinatorEntity[FelicityDataUpdateCoordinator], SensorEntity):
-    """Sensor for individual battery cell temperature."""
+    """Sensor for individual battery cell temperature (Cloud)."""
 
     _attr_device_class = SensorDeviceClass.TEMPERATURE
     _attr_native_unit_of_measurement = UnitOfTemperature.CELSIUS
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_entity_category = EntityCategory.DIAGNOSTIC
-    _attr_entity_registry_enabled_default = False  # Disabled by default as agreed in debate
+    _attr_entity_registry_enabled_default = False
 
     def __init__(
         self,

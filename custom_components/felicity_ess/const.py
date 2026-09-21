@@ -3,7 +3,32 @@ from homeassistant.const import Platform
 
 DOMAIN = "felicity_ess"
 
-# Configuration keys
+# Connection types
+CONF_CONNECTION_TYPE = "connection_type"
+CONNECTION_TYPE_LOCAL = "local"
+CONNECTION_TYPE_CLOUD = "cloud"
+
+# Local WiFi / LAN configuration keys
+CONF_HOST = "host"
+CONF_PORT = "port"
+CONF_INVERT_CURRENT = "invert_current"
+
+# Local network protocol parameters
+DEFAULT_PORT = 53970
+DEFAULT_LOCAL_PORT = 53970
+DEFAULT_TIMEOUT = 5.0
+DEFAULT_LOCAL_SCAN_INTERVAL = 15  # seconds
+DEFAULT_INVERT_CURRENT = False
+STRAY_BYTES_FLUSH_TIMEOUT = 0.05
+TCP_KEEPALIVE_IDLE = 10
+TCP_KEEPALIVE_INTERVAL = 5
+TCP_KEEPALIVE_COUNT = 3
+
+LOCAL_QUERY_COMMAND = b"wifilocalMonitor:get dev real infor"
+LOCAL_DATE_QUERY_COMMAND = b"wifilocalMonitor:get Date"
+LOCAL_ACK_BYTE = b"."
+
+# Cloud configuration keys
 CONF_USERNAME = "username"
 CONF_PASSWORD = "password"
 CONF_PLANT_ID = "plant_id"
@@ -12,11 +37,11 @@ CONF_SCAN_INTERVAL = "scan_interval"
 
 # Default intervals
 DEFAULT_SCAN_INTERVAL = 30  # seconds
-MIN_SCAN_INTERVAL = 15
+MIN_SCAN_INTERVAL = 5
 MAX_SCAN_INTERVAL = 300
 TOPOLOGY_UPDATE_INTERVAL_CYCLES = 60  # update device inventory every ~30 mins
 
-# API Endpoints
+# Cloud API Endpoints
 API_BASE_URL = "https://shine-api.felicitysolar.com"
 API_PATH_LOGIN = "/app/base/userlogin"
 API_PATH_LIST_PLANT = "/app/plant/list_plant"

@@ -2,6 +2,23 @@
   "config": {
     "step": {
       "user": {
+        "title": "Select Connection Mode",
+        "description": "Choose how Home Assistant connects to your Felicity Solar battery/system:",
+        "data": {
+          "connection_type": "Connection Type"
+        }
+      },
+      "local": {
+        "title": "Direct Local Network Connection",
+        "description": "Connect directly to the battery over your local Wi-Fi or LAN network without cloud or internet dependency.",
+        "data": {
+          "host": "Battery IP Address / Hostname",
+          "port": "TCP Port (default 53970)",
+          "invert_current": "Invert current sign (HA standard: negative = charging, positive = discharging)",
+          "scan_interval": "Update interval (seconds)"
+        }
+      },
+      "cloud": {
         "title": "Connect to Felicity Solar Cloud",
         "description": "Enter your Felicity Solar (Fsolar app) account credentials. Login can be Email, Phone number (as registered), or Username.",
         "data": {
@@ -26,7 +43,9 @@
       }
     },
     "error": {
-      "cannot_connect": "Failed to connect to Felicity Solar cloud service.",
+      "cannot_connect": "Failed to connect to battery or cloud service.",
+      "timeout": "Connection to battery timed out. Verify IP and that port 53970 is reachable.",
+      "protocol_error": "Received invalid response from battery local TCP port.",
       "user_not_found": "Account not found. If you registered in Fsolar with a mobile phone, enter that number (with or without country code).",
       "invalid_password": "Wrong account password. Please verify your Fsolar password.",
       "rsa_error": "Encryption error occurred while preparing credentials. Please try again.",
@@ -35,7 +54,7 @@
       "unknown": "Unexpected error occurred."
     },
     "abort": {
-      "already_configured": "This Felicity ESS plant is already configured.",
+      "already_configured": "This Felicity ESS battery or plant is already configured.",
       "reauth_successful": "Re-authentication was successful."
     }
   },
@@ -45,7 +64,8 @@
         "title": "Felicity ESS Settings",
         "description": "Configure telemetry update parameters.",
         "data": {
-          "scan_interval": "Update interval (seconds, 15 - 300)"
+          "scan_interval": "Update interval (seconds, 5 - 300)",
+          "invert_current": "Invert current sign (charging = negative)"
         }
       }
     }
@@ -62,19 +82,30 @@
       "voltage": { "name": "Voltage" },
       "current": { "name": "Current" },
       "power": { "name": "Power" },
+      "charging_state": { "name": "State" },
       "capacity": { "name": "Capacity" },
+      "cycle_count": { "name": "Cycle Count" },
       "bms_charge_current_limit": { "name": "BMS Charge Current Limit" },
       "bms_discharge_current_limit": { "name": "BMS Discharge Current Limit" },
       "bms_charge_voltage_limit": { "name": "BMS Charge Voltage Limit" },
       "bms_discharge_voltage_limit": { "name": "BMS Discharge Voltage Limit" },
+      "charge_current_limit": { "name": "Charge Current Limit" },
+      "discharge_current_limit": { "name": "Discharge Current Limit" },
+      "charge_voltage_limit": { "name": "Charge Voltage Limit" },
+      "discharge_voltage_limit": { "name": "Discharge Voltage Limit" },
       "today_battery_charge": { "name": "Energy Charged Today" },
       "today_battery_discharge": { "name": "Energy Discharged Today" },
       "max_cell_voltage": { "name": "Max Cell Voltage" },
       "min_cell_voltage": { "name": "Min Cell Voltage" },
-      "max_cell_voltage_num": { "name": "Max Cell Voltage Number" },
-      "min_cell_voltage_num": { "name": "Min Cell Voltage Number" },
+      "max_cell_number": { "name": "Max Cell Number" },
+      "min_cell_number": { "name": "Min Cell Number" },
       "max_cell_temperature": { "name": "Max Cell Temperature" },
-      "min_cell_temperature": { "name": "Min Cell Temperature" }
+      "min_cell_temperature": { "name": "Min Cell Temperature" },
+      "temperature_max": { "name": "Max Cell Temperature" },
+      "temperature_min": { "name": "Min Cell Temperature" },
+      "cell_voltage": { "name": "Cell {index} Voltage" },
+      "temperature": { "name": "Temperature {index}" },
+      "device_timestamp": { "name": "Device Time" }
     },
     "binary_sensor": {
       "plant_online": { "name": "Plant Online" },

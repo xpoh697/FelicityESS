@@ -1,135 +1,124 @@
 # Техническое задание (ТЗ): Home Assistant интеграция Felicity ESS
 
 ## 1. Введение и назначение
-Разработка кастомной интеграции для Home Assistant (совместимой со стандартами HACS) для мониторинга батарей и инверторов Felicity Solar (Felicity ESS) на основе реверс-инжиниринга официального Android-приложения Fsolar (версия 4.0.9, пакет `com.felicity.solar`).
+Разработка кастомной интеграции для Home Assistant (совместимой со стандартами HACS) для мониторинга батарей и инверторов Felicity Solar (Felicity ESS).
+Интеграция поддерживает два режима работы:
+1. **Локальный режим (Local WiFi / LAN) — ПРИОРИТЕТНЫЙ**: Прямой опрос контроллера батареи по локальной сети без интернета и без облака через встроенный TCP-сервер (порт 53970).
+2. **Облачный режим (Felicity Cloud)**: Опрос через облачный REST API `https://shine-api.felicitysolar.com` с клиентским шифрованием RSA.
 
-## 2. Результаты реверс-инжиниринга приложения Fsolar
+---
 
-### 2.1. Сетевая архитектура и эндпоинты
-- **Базовый URL API:** `https://shine-api.felicitysolar.com`
-- **Резервные / тестовые узлы:** `https://pre-api.felicitysolar.com`, `http://op-api-test.felicitysolar.com:8080`
-- **Протокол:** HTTPS REST API, формат запросов и ответов `application/json; charset=utf-8`
+## 2. Локальный сетевой протокол батарей Felicity (Direct Local TCP)
 
-### 2.2. Заголовки запросов (HTTP Headers)
-Все запросы к API формируются со следующими обязательными заголовками:
-- `source`: `"ANDROID"`
-- `version`: `"4.0.9"`
-- `lang`: `"ru"` или `"en"`
-- `Content-Type`: `"application/json; charset=utf-8"`
-- `token`: `<токен авторизации>` (после успешного входа)
+### 2.1. Сетевые параметры
+- **Протокол:** TCP (stream, no TLS, без Modbus-инкапсуляции)
+- **Порт:** `53970`
+- **Таймаут по умолчанию:** 5.0 секунд
+- **Keepalive:** Поддержка постоянного соединения (persistent TCP socket) с TCP keepalive для мгновенного обнаружения разрывов.
 
-### 2.3. Аутентификация и шифрование пароля
-- **Эндпоинт авторизации:** `POST /app/base/userlogin`
-- **Шифрование пароля:** Пароль перед отправкой шифруется по алгоритму RSA/ECB/PKCS1Padding и кодируется в Base64.
-- **Публичный ключ RSA (2048 бит):**
-```
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAnAJE68pjWZmtSg6ZJs9FZugJXC6bBSluTW6mJttOLOaljrdErVnM5DNN+YFzpB9pAysTErjY1bnSVuEwQSwptnqUji7Ch2qMj2n+0eCp8p6vtSh7/tFr2ul8nDRtkoswLANAIwtUk/G85ipMpmY1W642LImnEJmGkkddlbjbjxJTZWR5hc/d9cPWb+AR77LxFFrMik3c+44v1kQlIPFP6EjIbOvt/Lv7fHWD9JI/YzN4y1gK7C/VQdNGuikQyNg+5W3rg9ecYf9I5uLAQwY/hxeI3lbNsErebqKe2EbJ8AwcNIC0lDBz53Sq0ML89QapEuy3fB+upuctxLULVDCbNwIDAQAB
-```
-- **Тело запроса авторизации:**
+### 2.2. Формат команд и ответов
+1. **Запрос телеметрии реального времени:**
+   - Клиент отправляет ASCII-строку: `wifilocalMonitor:get dev real infor`
+   - Контроллер батареи отвечает строкой JSON. Чтение производится до первого символа `}` (закрывающей скобки корневого объекта).
+   - После успешного чтения JSON клиент отправляет символ подтверждения: `.` (`b"."`).
+2. **Запрос временной зоны и времени устройства (однократно при запуске):**
+   - Клиент отправляет: `wifilocalMonitor:get Date`
+   - Контроллер возвращает JSON со смещением часового пояса: `{"dateTime": "YYYYMMDDHHMMSS", "timeZMin": 60}`.
+
+### 2.3. Структура JSON-ответа устройства (`real infor`)
 ```json
 {
-  "userName": "user@example.com",
-  "password": "<RSA_BASE64_ENCRYPTED_PASSWORD>",
-  "version": "1.0",
-  "registrationId": ""
+  "CommVer": 1,
+  "wifiSN": "F075704831426060274",
+  "DevSN": "075704831426060274",
+  "Type": 112,
+  "SubType": 7353,
+  "Estate": 9152,
+  "Bstate": 9152,
+  "Bfault": 0,
+  "Bwarn": 0,
+  "BBfault": 0,
+  "BBwarn": 0,
+  "BmsCnt": 124,
+  "BattList": [[54040, 65535], [342, -1]],
+  "BatsocList": [[9600, 1000, 350000]],
+  "BatcelList": [
+    [3376, 3376, 3376, 3377, 3377, 3378, 3376, 3378, 3380, 3378, 3376, 3377, 3377, 3377, 3377, 3377]
+  ],
+  "BMaxMin": [[3380, 3376], [8, 0]],
+  "BLVolCu": [[576, 480], [320, 1600]],
+  "BTemp": [[260, 260], [256, 256]],
+  "BtemList": [[260, 260, 260, 260, 32767, 32767, 32767, 32767]]
 }
 ```
-- **Ответ авторизации:** Объект `UserEntity` со свойствами:
-  - `token`: строка токена (передается в заголовке `token` во все последующие вызовы).
-  - `id`: идентификатор пользователя (User ID).
-  - `nodeList`: список доступных узлов API.
 
-### 2.4. Получение списка станций (Plants)
-- **Эндпоинт:** `POST /app/plant/list_plant`
-- **Тело запроса:** `{"pageNum": 1, "pageSize": 50}`
-- **Ответ:** Список объектов `PlantRootEntity`:
-  - `plantId`: ID электростанции
-  - `plantName`: Название электростанции
-  - `status`: Статус (online/offline)
-  - Сводные мощности: `pvPower`, `feedPower`, `loadPower`
-  - Суточные счетчики: `todayBatteryCharging`, `todayBatteryDischarge`, `todayPv`, `todayLoad`, `todayFeedKwh`
-  - Общие счетчики: `totalCharge`, `totalDischarge`, `totalPvOutputKwh`, `totalLoadConsumptionKwh`
+### 2.4. Декодирование и масштабирование регистров
+- **Напряжение пака:** `BattList[0][0] / 1000` (В)
+- **Ток пака:** `BattList[1][0] / 10` (А). Поддерживается инверсия знака по стандарту HA (заряд — отрицательный, разряд — положительный).
+- **Мощность:** `Напряжение * Ток` (Вт)
+- **SOC:** `BatsocList[0][0] / 100` (%)
+- **SOH:** `BatsocList[0][1] / 10` (%)
+- **Емкость:** `BatsocList[0][2] / 1000` (А·ч)
+- **Циклы заряда:** `BmsCnt`
+- **Статус заряда:** Бит 13 в `Bstate` -> `charging`, бит 12 -> `discharging`, иначе -> `standby`.
+- **Ячейки 1..16:** `BatcelList[0][i] / 1000` (В)
+- **Экстремумы напряжений:** Макс: `BMaxMin[0][0] / 1000` (В) ячейка `BMaxMin[1][0]`, Мин: `BMaxMin[0][1] / 1000` (В) ячейка `BMaxMin[1][1]`
+- **Лимиты напряжений:** Макс. заряд: `BLVolCu[0][0] / 10` (В), Мин. разряд: `BLVolCu[0][1] / 10` (В)
+- **Лимиты тока:** Макс. ток заряда: `BLVolCu[1][0] / 10` (А), Макс. ток разряда: `BLVolCu[1][1] / 10` (А)
+- **Температуры:**
+  - Модель FLB48314: `BTemp[0][0] / 10`, `BTemp[0][1] / 10`, `BTemp[1][0] / 10`, `BTemp[1][1] / 10` (°C)
+  - Модель FLA24100: `BtemList[0][0..3] / 10` (°C)
+  - Фильтрация сенсорных заглушек `32767`, `65535`, `-1`.
 
-### 2.5. Получение списка устройств станции (Devices)
-- **Эндпоинт:** `POST /app/device/list_device`
-- **Тело запроса:** `{"plantId": "<PLANT_ID>", "pageNum": 1, "pageSize": 50, "deviceType": "ALL"}`
-- **Ответ:** Список объектов `DeviceBaseEntity`:
-  - `deviceSn`: Серийный номер устройства
-  - `deviceModel`: Модель (например, `LPBR48250`, `FLS-xxx`)
-  - `deviceType`: Тип устройства (`BP` — батарейный блок, `HY` — гибридный инвертор, `IV` — инвертор)
-  - `status`: Статус связи (онлайн / офлайн)
-  - `emsSoc`: Заряд батареи (SOC %)
-  - `emsSoh`: Здоровье батареи (SOH %)
-  - `emsCapacity`: Емкость батареи (Ah / kWh)
-  - `emsVoltage`: Напряжение батареи (V)
-  - `emsCurrent`: Ток батареи (A)
-  - `emsPower`: Мощность батареи (W)
-  - `bmsPower`: Мощность BMS
-  - `bmslccurr`: Лимит тока заряда BMS (A)
-  - `bmsldcurr`: Лимит тока разряда BMS (A)
-  - `ebatCharToday`: Заряжено сегодня (kWh)
-  - `ebatDisCharToday`: Разряжено сегодня (kWh)
-  - `pvPower`, `pvTotalPower`: Мощность генерации солнечных панелей (W)
-  - `wifiSignal`: Уровень сигнала WiFi/коллектора
-  - `firmwareVersion`: Версия прошивки
-  - `controlVersion`, `displayVersion`, `moduleVersion`
+---
 
-### 2.6. Детальные данные батареи и ячеек (Telemetry)
-- **Эндпоинты:**
-  - `POST /app/plant/plantDetails_Battery` с телом `{"id": "<PLANT_ID>"}`
-  - `GET /app/storageRealtimeData/pv_power_storage_realtimeData`
-- **Параметры ячеек и BMS (согласно спецификации протокола `protocol_realtime` ключ 48/112):**
-  - Напряжения ячеек: `cellVolt1` ... `cellVolt16` (В)
-  - Температуры ячеек: `cellTemp1` ... `cellTemp4` (°C)
-  - Экстремумы: `maxVoltage2bms`, `minVoltage2bms`, `maxVoltageNum2bms`, `minVoltageNum2bms`
-  - Температуры экстремумы: `tempMax`, `tempMin`, `maxCellTempNum`, `minBattTempNum`
-  - Лимиты напряжений: `BMSLCVolt` (Charge Voltage Limit), `BMSLDVolt` (Discharge Voltage Limit)
-  - Статус BMS: `bmsState`
+## 3. Облачный протокол (Felicity Cloud REST API)
 
-## 3. Требования к архитектуре интеграции Home Assistant
+### 3.1. Эндпоинты
+- **Базовый URL:** `https://shine-api.felicitysolar.com`
+- `POST /app/base/userlogin` — авторизация с RSA 2048 PKCS1v15 шифрованием пароля
+- `POST /app/plant/list_plant` — список станций
+- `POST /app/device/list_device` — список устройств
+- `POST /app/plant/plantDetails_Battery` — детальные параметры батареи
+- `GET /app/storageRealtimeData/pv_power_storage_realtimeData` — потоки мощности
 
-### 3.1. Структура интеграции
+---
+
+## 4. Архитектура интеграции Home Assistant
+
+### 4.1. Структура интеграции
 ```
 custom_components/felicity_ess/
 ├── __init__.py
 ├── manifest.json
-├── hacs.json (в корне репозитория)
+├── hacs.json
 ├── const.py
-├── config_flow.py
-├── coordinator.py
-├── api.py
-├── sensor.py
-├── binary_sensor.py
+├── config_flow.py                             # Выбор Local или Cloud режима
+├── coordinator.py                             # Поддержка Local и Cloud координаторов
+├── local_client.py                            # Асинхронный TCP-клиент (порт 53970)
+├── profiles.py                                # Профили масштабирования моделей батарей
+├── api.py                                     # Облачный REST-клиент
+├── sensor.py                                  # Сенсоры для локального и облачного режимов
+├── binary_sensor.py                           # Бинарные сенсоры онлайн и тревог
 ├── brand/
 │   ├── icon.png (1024x1024)
 │   └── logo.png (1024x1024)
 ├── translations/
 │   ├── en.json
 │   └── ru.json
-└── strings.json
+├── strings.json
+├── deploy.ps1
+└── README.md
 ```
 
-### 3.2. Компоненты интеграции
-1. **`api.py`**:
-   - Асинхронный клиент на базе `aiohttp`
-   - Шифрование пароля по RSA/PKCS1v15 через библиотеку `cryptography`
-   - Автоматический повторный вход при истечении срока действия токена (HTTP 401 / ApiCode 3001)
-   - Методы: `login()`, `get_plants()`, `get_devices()`, `get_battery_details()`, `get_realtime_data()`
-2. **`coordinator.py` (`DataUpdateCoordinator`)**:
-   - Периодический опрос данных (настраиваемый интервал, по умолчанию 30 секунд)
-   - Объединение данных по станции, устройствам и батареям в единый кэш
-   - Надежная обработка разрывов связи и таймаутов
-3. **`config_flow.py`**:
-   - Графическая настройка через UI Home Assistant (email/username, password, выбор станции)
-   - Валидация учетных данных перед сохранением
-   - Поддержка Options Flow (интервал опроса 15-300 сек)
-4. **Сенсоры (`sensor.py`, `binary_sensor.py`)**:
-   - Батарея: SOC (%), SOH (%), Емкость (Ah/kWh), Напряжение (V), Ток (A), Мощность (W), Заряд за сегодня (kWh), Разряд за сегодня (kWh)
-   - BMS: Статус, Лимиты тока заряда/разряда (A), Лимиты напряжений (V), Cell Voltages 1..16 (V), Cell Temps 1..4 (°C), Мин/Макс напряжения и номера ячеек
-   - Инвертор / Сеть / PV: Солнечная мощность (W), Напряжения/токи стрингов, Мощность сети, Потребление дома
-   - Бинарные сенсоры: Статус онлайн/офлайн, Ошибки BMS, Сигнал тревоги
-
-### 3.3. Брендинг и HACS совместимость
-- Иконка и логотип (`icon.png`, `logo.png` 1024x1024) в формате, принятом в Home Assistant Brands / HACS, с фирменным логотипом Felicity Solar (оранжевый круг с градиентом и стилизованной белой строчной буквой "f").
-- Файл `hacs.json` с метаданными.
-- Репозиторий GitHub: `https://github.com/xpoh697/FelicityESS`.
+### 4.2. Настройка в Config Flow
+- **Шаг 1 (Выбор типа подключения):**
+  - «Локальная сеть (Рекомендуется) — прямое подключение к батарее по IP»
+  - «Облако Felicity — через логин и пароль Fsolar»
+- **Шаг 2A (Локальный режим):**
+  - IP-адрес батареи (например, `192.168.1.150`)
+  - Порт (по умолчанию `53970`)
+  - Тестовый опрос устройства: проверка ответа `DevSN` перед созданием интеграции.
+- **Шаг 2B (Облачный режим):**
+  - Email / телефон / логин и пароль
+  - Выбор станции
