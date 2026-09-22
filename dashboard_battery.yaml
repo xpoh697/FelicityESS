@@ -166,6 +166,7 @@ views:
           - type: horizontal-stack
             cards:
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "{{ states('sensor.felicity_battery_100011002424520070_voltage') }} В"
                 secondary: "Напряжение"
                 icon: mdi:sine-wave
@@ -175,8 +176,9 @@ views:
                   entity: sensor.felicity_battery_100011002424520070_voltage
 
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "{{ states('sensor.felicity_battery_100011002424520070_current') }} А"
-                secondary: "Ток"
+                secondary: "Ток пака"
                 icon: mdi:current-dc
                 icon_color: >
                   {% set c = states('sensor.felicity_battery_100011002424520070_current') | float(0) %}
@@ -189,6 +191,7 @@ views:
                   entity: sensor.felicity_battery_100011002424520070_current
 
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "{{ states('sensor.felicity_battery_100011002424520070_power') }} Вт"
                 secondary: "Мощность"
                 icon: mdi:lightning-bolt
@@ -214,6 +217,7 @@ views:
             cards:
               # Дельта напряжений (ΔV в милливольтах)
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: >
                   {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
                   {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
@@ -222,7 +226,7 @@ views:
                   {% else %}
                     — мВ
                   {% endif %}
-                secondary: "Разброс ячеек (ΔV)"
+                secondary: "Разброс ΔV"
                 icon: mdi:delta
                 icon_color: >
                   {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
@@ -247,8 +251,9 @@ views:
 
               # Максимальная ячейка
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "{{ states('sensor.felicity_battery_100011002424520070_max_cell_voltage') }} В"
-                secondary: "Макс: Яч. #{{ states('sensor.felicity_battery_100011002424520070_max_cell_number') }}"
+                secondary: "Макс (№{{ states('sensor.felicity_battery_100011002424520070_max_cell_number') }})"
                 icon: mdi:arrow-up-bold-box
                 icon_color: cyan
                 badge_icon: mdi:crown
@@ -259,8 +264,9 @@ views:
 
               # Минимальная ячейка
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "{{ states('sensor.felicity_battery_100011002424520070_min_cell_voltage') }} В"
-                secondary: "Мин: Яч. #{{ states('sensor.felicity_battery_100011002424520070_min_cell_number') }}"
+                secondary: "Мин (№{{ states('sensor.felicity_battery_100011002424520070_min_cell_number') }})"
                 icon: mdi:arrow-down-bold-box
                 icon_color: deep-orange
                 badge_icon: mdi:alert-circle-outline
@@ -283,6 +289,7 @@ views:
             cards:
               # Ячейка 1
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "Яч. 1"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_1_voltage') }} В"
                 icon: mdi:battery-outline
@@ -313,6 +320,7 @@ views:
 
               # Ячейка 2
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "Яч. 2"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_2_voltage') }} В"
                 icon: mdi:battery-outline
@@ -343,6 +351,7 @@ views:
 
               # Ячейка 3
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "Яч. 3"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_3_voltage') }} В"
                 icon: mdi:battery-outline
@@ -373,6 +382,7 @@ views:
 
               # Ячейка 4
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "Яч. 4"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_4_voltage') }} В"
                 icon: mdi:battery-outline
@@ -403,6 +413,7 @@ views:
 
               # Ячейка 5
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "Яч. 5"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_5_voltage') }} В"
                 icon: mdi:battery-outline
@@ -433,6 +444,7 @@ views:
 
               # Ячейка 6
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "Яч. 6"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_6_voltage') }} В"
                 icon: mdi:battery-outline
@@ -463,6 +475,7 @@ views:
 
               # Ячейка 7
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "Яч. 7"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_7_voltage') }} В"
                 icon: mdi:battery-outline
@@ -493,6 +506,7 @@ views:
 
               # Ячейка 8
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "Яч. 8"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_8_voltage') }} В"
                 icon: mdi:battery-outline
@@ -523,6 +537,7 @@ views:
 
               # Ячейка 9
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "Яч. 9"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_9_voltage') }} В"
                 icon: mdi:battery-outline
@@ -553,6 +568,7 @@ views:
 
               # Ячейка 10
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "Яч. 10"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_10_voltage') }} В"
                 icon: mdi:battery-outline
@@ -583,6 +599,7 @@ views:
 
               # Ячейка 11
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "Яч. 11"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_11_voltage') }} В"
                 icon: mdi:battery-outline
@@ -613,6 +630,7 @@ views:
 
               # Ячейка 12
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "Яч. 12"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_12_voltage') }} В"
                 icon: mdi:battery-outline
@@ -643,6 +661,7 @@ views:
 
               # Ячейка 13
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "Яч. 13"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_13_voltage') }} В"
                 icon: mdi:battery-outline
@@ -673,6 +692,7 @@ views:
 
               # Ячейка 14
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "Яч. 14"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_14_voltage') }} В"
                 icon: mdi:battery-outline
@@ -703,6 +723,7 @@ views:
 
               # Ячейка 15
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "Яч. 15"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_15_voltage') }} В"
                 icon: mdi:battery-outline
@@ -733,6 +754,7 @@ views:
 
               # Ячейка 16
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "Яч. 16"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_16_voltage') }} В"
                 icon: mdi:battery-outline
@@ -772,8 +794,9 @@ views:
           - type: horizontal-stack
             cards:
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "{{ states('sensor.felicity_battery_100011002424520070_charge_current_limit') }} А"
-                secondary: "Лимит тока заряда"
+                secondary: "Лимит заряда"
                 icon: mdi:battery-arrow-up
                 icon_color: green
                 tap_action:
@@ -781,8 +804,9 @@ views:
                   entity: sensor.felicity_battery_100011002424520070_charge_current_limit
 
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "{{ states('sensor.felicity_battery_100011002424520070_discharge_current_limit') }} А"
-                secondary: "Лимит тока разряда"
+                secondary: "Лимит разряда"
                 icon: mdi:battery-arrow-down
                 icon_color: orange
                 tap_action:
@@ -792,8 +816,9 @@ views:
           - type: horizontal-stack
             cards:
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "{{ states('sensor.felicity_battery_100011002424520070_charge_voltage_limit') }} В"
-                secondary: "Макс. напр. заряда"
+                secondary: "Макс. напр."
                 icon: mdi:arrow-up-bold-circle
                 icon_color: green
                 tap_action:
@@ -801,8 +826,9 @@ views:
                   entity: sensor.felicity_battery_100011002424520070_charge_voltage_limit
 
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "{{ states('sensor.felicity_battery_100011002424520070_discharge_voltage_limit') }} В"
-                secondary: "Мин. напр. разряда"
+                secondary: "Мин. напр."
                 icon: mdi:arrow-down-bold-circle
                 icon_color: orange
                 tap_action:
@@ -814,8 +840,9 @@ views:
             square: false
             cards:
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "{{ states('sensor.felicity_battery_100011002424520070_temperature_1') }} °C"
-                secondary: "Т зонд 1"
+                secondary: "Зонд 1"
                 icon: mdi:thermometer
                 icon_color: blue
                 tap_action:
@@ -823,8 +850,9 @@ views:
                   entity: sensor.felicity_battery_100011002424520070_temperature_1
 
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "{{ states('sensor.felicity_battery_100011002424520070_temperature_2') }} °C"
-                secondary: "Т зонд 2"
+                secondary: "Зонд 2"
                 icon: mdi:thermometer
                 icon_color: blue
                 tap_action:
@@ -832,8 +860,9 @@ views:
                   entity: sensor.felicity_battery_100011002424520070_temperature_2
 
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "{{ states('sensor.felicity_battery_100011002424520070_temperature_3') }} °C"
-                secondary: "Т зонд 3"
+                secondary: "Зонд 3"
                 icon: mdi:thermometer
                 icon_color: blue
                 tap_action:
@@ -841,8 +870,9 @@ views:
                   entity: sensor.felicity_battery_100011002424520070_temperature_3
 
               - type: custom:mushroom-template-card
+                layout: vertical
                 primary: "{{ states('sensor.felicity_battery_100011002424520070_temperature_4') }} °C"
-                secondary: "Т зонд 4"
+                secondary: "Зонд 4"
                 icon: mdi:thermometer
                 icon_color: blue
                 tap_action:
