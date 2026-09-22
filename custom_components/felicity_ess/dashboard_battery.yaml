@@ -287,496 +287,416 @@ views:
                 layout: vertical
                 primary: "Яч. 1"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_1_voltage') }} В"
-                icon: mdi:battery-outline
-                icon_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_1_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% else %} blue {% endif %}
-                badge_icon: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_1_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} mdi:arrow-up-bold
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} mdi:arrow-down-bold
-                  {% endif %}
-                badge_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_1_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% endif %}
                 tap_action:
                   action: more-info
                   entity: sensor.felicity_battery_100011002424520070_cell_1_voltage
+                card_mod:
+                  style: |
+                    ha-card {
+                      {% set val = states('sensor.felicity_battery_100011002424520070_cell_1_voltage') | float(0) %}
+                      {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
+                      {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
+                      {% if val > 2.0 and max_v > 2.0 and (val - max_v) | abs <= 0.002 %}
+                        background: rgba(0, 188, 212, 0.25) !important;
+                        border: 1.5px solid #00bcd4 !important;
+                      {% elif val > 2.0 and min_v > 2.0 and (val - min_v) | abs <= 0.002 %}
+                        background: rgba(255, 87, 34, 0.25) !important;
+                        border: 1.5px solid #ff5722 !important;
+                      {% else %}
+                        background: rgba(255, 255, 255, 0.04) !important;
+                        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                      {% endif %}
+                    }
 
               # Ячейка 2
               - type: custom:mushroom-template-card
                 layout: vertical
                 primary: "Яч. 2"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_2_voltage') }} В"
-                icon: mdi:battery-outline
-                icon_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_2_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% else %} blue {% endif %}
-                badge_icon: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_2_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} mdi:arrow-up-bold
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} mdi:arrow-down-bold
-                  {% endif %}
-                badge_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_2_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% endif %}
                 tap_action:
                   action: more-info
                   entity: sensor.felicity_battery_100011002424520070_cell_2_voltage
+                card_mod:
+                  style: |
+                    ha-card {
+                      {% set val = states('sensor.felicity_battery_100011002424520070_cell_2_voltage') | float(0) %}
+                      {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
+                      {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
+                      {% if val > 2.0 and max_v > 2.0 and (val - max_v) | abs <= 0.002 %}
+                        background: rgba(0, 188, 212, 0.25) !important;
+                        border: 1.5px solid #00bcd4 !important;
+                      {% elif val > 2.0 and min_v > 2.0 and (val - min_v) | abs <= 0.002 %}
+                        background: rgba(255, 87, 34, 0.25) !important;
+                        border: 1.5px solid #ff5722 !important;
+                      {% else %}
+                        background: rgba(255, 255, 255, 0.04) !important;
+                        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                      {% endif %}
+                    }
 
               # Ячейка 3
               - type: custom:mushroom-template-card
                 layout: vertical
                 primary: "Яч. 3"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_3_voltage') }} В"
-                icon: mdi:battery-outline
-                icon_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_3_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% else %} blue {% endif %}
-                badge_icon: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_3_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} mdi:arrow-up-bold
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} mdi:arrow-down-bold
-                  {% endif %}
-                badge_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_3_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% endif %}
                 tap_action:
                   action: more-info
                   entity: sensor.felicity_battery_100011002424520070_cell_3_voltage
+                card_mod:
+                  style: |
+                    ha-card {
+                      {% set val = states('sensor.felicity_battery_100011002424520070_cell_3_voltage') | float(0) %}
+                      {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
+                      {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
+                      {% if val > 2.0 and max_v > 2.0 and (val - max_v) | abs <= 0.002 %}
+                        background: rgba(0, 188, 212, 0.25) !important;
+                        border: 1.5px solid #00bcd4 !important;
+                      {% elif val > 2.0 and min_v > 2.0 and (val - min_v) | abs <= 0.002 %}
+                        background: rgba(255, 87, 34, 0.25) !important;
+                        border: 1.5px solid #ff5722 !important;
+                      {% else %}
+                        background: rgba(255, 255, 255, 0.04) !important;
+                        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                      {% endif %}
+                    }
 
               # Ячейка 4
               - type: custom:mushroom-template-card
                 layout: vertical
                 primary: "Яч. 4"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_4_voltage') }} В"
-                icon: mdi:battery-outline
-                icon_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_4_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% else %} blue {% endif %}
-                badge_icon: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_4_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} mdi:arrow-up-bold
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} mdi:arrow-down-bold
-                  {% endif %}
-                badge_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_4_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% endif %}
                 tap_action:
                   action: more-info
                   entity: sensor.felicity_battery_100011002424520070_cell_4_voltage
+                card_mod:
+                  style: |
+                    ha-card {
+                      {% set val = states('sensor.felicity_battery_100011002424520070_cell_4_voltage') | float(0) %}
+                      {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
+                      {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
+                      {% if val > 2.0 and max_v > 2.0 and (val - max_v) | abs <= 0.002 %}
+                        background: rgba(0, 188, 212, 0.25) !important;
+                        border: 1.5px solid #00bcd4 !important;
+                      {% elif val > 2.0 and min_v > 2.0 and (val - min_v) | abs <= 0.002 %}
+                        background: rgba(255, 87, 34, 0.25) !important;
+                        border: 1.5px solid #ff5722 !important;
+                      {% else %}
+                        background: rgba(255, 255, 255, 0.04) !important;
+                        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                      {% endif %}
+                    }
 
               # Ячейка 5
               - type: custom:mushroom-template-card
                 layout: vertical
                 primary: "Яч. 5"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_5_voltage') }} В"
-                icon: mdi:battery-outline
-                icon_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_5_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% else %} blue {% endif %}
-                badge_icon: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_5_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} mdi:arrow-up-bold
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} mdi:arrow-down-bold
-                  {% endif %}
-                badge_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_5_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% endif %}
                 tap_action:
                   action: more-info
                   entity: sensor.felicity_battery_100011002424520070_cell_5_voltage
+                card_mod:
+                  style: |
+                    ha-card {
+                      {% set val = states('sensor.felicity_battery_100011002424520070_cell_5_voltage') | float(0) %}
+                      {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
+                      {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
+                      {% if val > 2.0 and max_v > 2.0 and (val - max_v) | abs <= 0.002 %}
+                        background: rgba(0, 188, 212, 0.25) !important;
+                        border: 1.5px solid #00bcd4 !important;
+                      {% elif val > 2.0 and min_v > 2.0 and (val - min_v) | abs <= 0.002 %}
+                        background: rgba(255, 87, 34, 0.25) !important;
+                        border: 1.5px solid #ff5722 !important;
+                      {% else %}
+                        background: rgba(255, 255, 255, 0.04) !important;
+                        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                      {% endif %}
+                    }
 
               # Ячейка 6
               - type: custom:mushroom-template-card
                 layout: vertical
                 primary: "Яч. 6"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_6_voltage') }} В"
-                icon: mdi:battery-outline
-                icon_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_6_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% else %} blue {% endif %}
-                badge_icon: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_6_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} mdi:arrow-up-bold
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} mdi:arrow-down-bold
-                  {% endif %}
-                badge_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_6_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% endif %}
                 tap_action:
                   action: more-info
                   entity: sensor.felicity_battery_100011002424520070_cell_6_voltage
+                card_mod:
+                  style: |
+                    ha-card {
+                      {% set val = states('sensor.felicity_battery_100011002424520070_cell_6_voltage') | float(0) %}
+                      {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
+                      {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
+                      {% if val > 2.0 and max_v > 2.0 and (val - max_v) | abs <= 0.002 %}
+                        background: rgba(0, 188, 212, 0.25) !important;
+                        border: 1.5px solid #00bcd4 !important;
+                      {% elif val > 2.0 and min_v > 2.0 and (val - min_v) | abs <= 0.002 %}
+                        background: rgba(255, 87, 34, 0.25) !important;
+                        border: 1.5px solid #ff5722 !important;
+                      {% else %}
+                        background: rgba(255, 255, 255, 0.04) !important;
+                        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                      {% endif %}
+                    }
 
               # Ячейка 7
               - type: custom:mushroom-template-card
                 layout: vertical
                 primary: "Яч. 7"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_7_voltage') }} В"
-                icon: mdi:battery-outline
-                icon_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_7_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% else %} blue {% endif %}
-                badge_icon: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_7_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} mdi:arrow-up-bold
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} mdi:arrow-down-bold
-                  {% endif %}
-                badge_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_7_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% endif %}
                 tap_action:
                   action: more-info
                   entity: sensor.felicity_battery_100011002424520070_cell_7_voltage
+                card_mod:
+                  style: |
+                    ha-card {
+                      {% set val = states('sensor.felicity_battery_100011002424520070_cell_7_voltage') | float(0) %}
+                      {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
+                      {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
+                      {% if val > 2.0 and max_v > 2.0 and (val - max_v) | abs <= 0.002 %}
+                        background: rgba(0, 188, 212, 0.25) !important;
+                        border: 1.5px solid #00bcd4 !important;
+                      {% elif val > 2.0 and min_v > 2.0 and (val - min_v) | abs <= 0.002 %}
+                        background: rgba(255, 87, 34, 0.25) !important;
+                        border: 1.5px solid #ff5722 !important;
+                      {% else %}
+                        background: rgba(255, 255, 255, 0.04) !important;
+                        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                      {% endif %}
+                    }
 
               # Ячейка 8
               - type: custom:mushroom-template-card
                 layout: vertical
                 primary: "Яч. 8"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_8_voltage') }} В"
-                icon: mdi:battery-outline
-                icon_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_8_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% else %} blue {% endif %}
-                badge_icon: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_8_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} mdi:arrow-up-bold
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} mdi:arrow-down-bold
-                  {% endif %}
-                badge_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_8_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% endif %}
                 tap_action:
                   action: more-info
                   entity: sensor.felicity_battery_100011002424520070_cell_8_voltage
+                card_mod:
+                  style: |
+                    ha-card {
+                      {% set val = states('sensor.felicity_battery_100011002424520070_cell_8_voltage') | float(0) %}
+                      {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
+                      {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
+                      {% if val > 2.0 and max_v > 2.0 and (val - max_v) | abs <= 0.002 %}
+                        background: rgba(0, 188, 212, 0.25) !important;
+                        border: 1.5px solid #00bcd4 !important;
+                      {% elif val > 2.0 and min_v > 2.0 and (val - min_v) | abs <= 0.002 %}
+                        background: rgba(255, 87, 34, 0.25) !important;
+                        border: 1.5px solid #ff5722 !important;
+                      {% else %}
+                        background: rgba(255, 255, 255, 0.04) !important;
+                        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                      {% endif %}
+                    }
 
               # Ячейка 9
               - type: custom:mushroom-template-card
                 layout: vertical
                 primary: "Яч. 9"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_9_voltage') }} В"
-                icon: mdi:battery-outline
-                icon_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_9_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% else %} blue {% endif %}
-                badge_icon: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_9_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} mdi:arrow-up-bold
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} mdi:arrow-down-bold
-                  {% endif %}
-                badge_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_9_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% endif %}
                 tap_action:
                   action: more-info
                   entity: sensor.felicity_battery_100011002424520070_cell_9_voltage
+                card_mod:
+                  style: |
+                    ha-card {
+                      {% set val = states('sensor.felicity_battery_100011002424520070_cell_9_voltage') | float(0) %}
+                      {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
+                      {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
+                      {% if val > 2.0 and max_v > 2.0 and (val - max_v) | abs <= 0.002 %}
+                        background: rgba(0, 188, 212, 0.25) !important;
+                        border: 1.5px solid #00bcd4 !important;
+                      {% elif val > 2.0 and min_v > 2.0 and (val - min_v) | abs <= 0.002 %}
+                        background: rgba(255, 87, 34, 0.25) !important;
+                        border: 1.5px solid #ff5722 !important;
+                      {% else %}
+                        background: rgba(255, 255, 255, 0.04) !important;
+                        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                      {% endif %}
+                    }
 
               # Ячейка 10
               - type: custom:mushroom-template-card
                 layout: vertical
                 primary: "Яч. 10"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_10_voltage') }} В"
-                icon: mdi:battery-outline
-                icon_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_10_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% else %} blue {% endif %}
-                badge_icon: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_10_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} mdi:arrow-up-bold
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} mdi:arrow-down-bold
-                  {% endif %}
-                badge_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_10_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% endif %}
                 tap_action:
                   action: more-info
                   entity: sensor.felicity_battery_100011002424520070_cell_10_voltage
+                card_mod:
+                  style: |
+                    ha-card {
+                      {% set val = states('sensor.felicity_battery_100011002424520070_cell_10_voltage') | float(0) %}
+                      {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
+                      {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
+                      {% if val > 2.0 and max_v > 2.0 and (val - max_v) | abs <= 0.002 %}
+                        background: rgba(0, 188, 212, 0.25) !important;
+                        border: 1.5px solid #00bcd4 !important;
+                      {% elif val > 2.0 and min_v > 2.0 and (val - min_v) | abs <= 0.002 %}
+                        background: rgba(255, 87, 34, 0.25) !important;
+                        border: 1.5px solid #ff5722 !important;
+                      {% else %}
+                        background: rgba(255, 255, 255, 0.04) !important;
+                        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                      {% endif %}
+                    }
 
               # Ячейка 11
               - type: custom:mushroom-template-card
                 layout: vertical
                 primary: "Яч. 11"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_11_voltage') }} В"
-                icon: mdi:battery-outline
-                icon_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_11_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% else %} blue {% endif %}
-                badge_icon: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_11_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} mdi:arrow-up-bold
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} mdi:arrow-down-bold
-                  {% endif %}
-                badge_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_11_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% endif %}
                 tap_action:
                   action: more-info
                   entity: sensor.felicity_battery_100011002424520070_cell_11_voltage
+                card_mod:
+                  style: |
+                    ha-card {
+                      {% set val = states('sensor.felicity_battery_100011002424520070_cell_11_voltage') | float(0) %}
+                      {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
+                      {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
+                      {% if val > 2.0 and max_v > 2.0 and (val - max_v) | abs <= 0.002 %}
+                        background: rgba(0, 188, 212, 0.25) !important;
+                        border: 1.5px solid #00bcd4 !important;
+                      {% elif val > 2.0 and min_v > 2.0 and (val - min_v) | abs <= 0.002 %}
+                        background: rgba(255, 87, 34, 0.25) !important;
+                        border: 1.5px solid #ff5722 !important;
+                      {% else %}
+                        background: rgba(255, 255, 255, 0.04) !important;
+                        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                      {% endif %}
+                    }
 
               # Ячейка 12
               - type: custom:mushroom-template-card
                 layout: vertical
                 primary: "Яч. 12"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_12_voltage') }} В"
-                icon: mdi:battery-outline
-                icon_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_12_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% else %} blue {% endif %}
-                badge_icon: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_12_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} mdi:arrow-up-bold
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} mdi:arrow-down-bold
-                  {% endif %}
-                badge_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_12_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% endif %}
                 tap_action:
                   action: more-info
                   entity: sensor.felicity_battery_100011002424520070_cell_12_voltage
+                card_mod:
+                  style: |
+                    ha-card {
+                      {% set val = states('sensor.felicity_battery_100011002424520070_cell_12_voltage') | float(0) %}
+                      {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
+                      {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
+                      {% if val > 2.0 and max_v > 2.0 and (val - max_v) | abs <= 0.002 %}
+                        background: rgba(0, 188, 212, 0.25) !important;
+                        border: 1.5px solid #00bcd4 !important;
+                      {% elif val > 2.0 and min_v > 2.0 and (val - min_v) | abs <= 0.002 %}
+                        background: rgba(255, 87, 34, 0.25) !important;
+                        border: 1.5px solid #ff5722 !important;
+                      {% else %}
+                        background: rgba(255, 255, 255, 0.04) !important;
+                        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                      {% endif %}
+                    }
 
               # Ячейка 13
               - type: custom:mushroom-template-card
                 layout: vertical
                 primary: "Яч. 13"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_13_voltage') }} В"
-                icon: mdi:battery-outline
-                icon_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_13_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% else %} blue {% endif %}
-                badge_icon: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_13_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} mdi:arrow-up-bold
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} mdi:arrow-down-bold
-                  {% endif %}
-                badge_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_13_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% endif %}
                 tap_action:
                   action: more-info
                   entity: sensor.felicity_battery_100011002424520070_cell_13_voltage
+                card_mod:
+                  style: |
+                    ha-card {
+                      {% set val = states('sensor.felicity_battery_100011002424520070_cell_13_voltage') | float(0) %}
+                      {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
+                      {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
+                      {% if val > 2.0 and max_v > 2.0 and (val - max_v) | abs <= 0.002 %}
+                        background: rgba(0, 188, 212, 0.25) !important;
+                        border: 1.5px solid #00bcd4 !important;
+                      {% elif val > 2.0 and min_v > 2.0 and (val - min_v) | abs <= 0.002 %}
+                        background: rgba(255, 87, 34, 0.25) !important;
+                        border: 1.5px solid #ff5722 !important;
+                      {% else %}
+                        background: rgba(255, 255, 255, 0.04) !important;
+                        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                      {% endif %}
+                    }
 
               # Ячейка 14
               - type: custom:mushroom-template-card
                 layout: vertical
                 primary: "Яч. 14"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_14_voltage') }} В"
-                icon: mdi:battery-outline
-                icon_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_14_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% else %} blue {% endif %}
-                badge_icon: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_14_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} mdi:arrow-up-bold
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} mdi:arrow-down-bold
-                  {% endif %}
-                badge_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_14_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% endif %}
                 tap_action:
                   action: more-info
                   entity: sensor.felicity_battery_100011002424520070_cell_14_voltage
+                card_mod:
+                  style: |
+                    ha-card {
+                      {% set val = states('sensor.felicity_battery_100011002424520070_cell_14_voltage') | float(0) %}
+                      {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
+                      {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
+                      {% if val > 2.0 and max_v > 2.0 and (val - max_v) | abs <= 0.002 %}
+                        background: rgba(0, 188, 212, 0.25) !important;
+                        border: 1.5px solid #00bcd4 !important;
+                      {% elif val > 2.0 and min_v > 2.0 and (val - min_v) | abs <= 0.002 %}
+                        background: rgba(255, 87, 34, 0.25) !important;
+                        border: 1.5px solid #ff5722 !important;
+                      {% else %}
+                        background: rgba(255, 255, 255, 0.04) !important;
+                        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                      {% endif %}
+                    }
 
               # Ячейка 15
               - type: custom:mushroom-template-card
                 layout: vertical
                 primary: "Яч. 15"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_15_voltage') }} В"
-                icon: mdi:battery-outline
-                icon_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_15_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% else %} blue {% endif %}
-                badge_icon: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_15_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} mdi:arrow-up-bold
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} mdi:arrow-down-bold
-                  {% endif %}
-                badge_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_15_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% endif %}
                 tap_action:
                   action: more-info
                   entity: sensor.felicity_battery_100011002424520070_cell_15_voltage
+                card_mod:
+                  style: |
+                    ha-card {
+                      {% set val = states('sensor.felicity_battery_100011002424520070_cell_15_voltage') | float(0) %}
+                      {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
+                      {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
+                      {% if val > 2.0 and max_v > 2.0 and (val - max_v) | abs <= 0.002 %}
+                        background: rgba(0, 188, 212, 0.25) !important;
+                        border: 1.5px solid #00bcd4 !important;
+                      {% elif val > 2.0 and min_v > 2.0 and (val - min_v) | abs <= 0.002 %}
+                        background: rgba(255, 87, 34, 0.25) !important;
+                        border: 1.5px solid #ff5722 !important;
+                      {% else %}
+                        background: rgba(255, 255, 255, 0.04) !important;
+                        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                      {% endif %}
+                    }
 
               # Ячейка 16
               - type: custom:mushroom-template-card
                 layout: vertical
                 primary: "Яч. 16"
                 secondary: "{{ states('sensor.felicity_battery_100011002424520070_cell_16_voltage') }} В"
-                icon: mdi:battery-outline
-                icon_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_16_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% else %} blue {% endif %}
-                badge_icon: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_16_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} mdi:arrow-up-bold
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} mdi:arrow-down-bold
-                  {% endif %}
-                badge_color: >
-                  {% set val = states('sensor.felicity_battery_100011002424520070_cell_16_voltage') | float(0) %}
-                  {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
-                  {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
-                  {% if val > 2.0 and (val - max_v) | abs <= 0.002 %} cyan
-                  {% elif val > 2.0 and (val - min_v) | abs <= 0.002 %} deep-orange
-                  {% endif %}
                 tap_action:
                   action: more-info
                   entity: sensor.felicity_battery_100011002424520070_cell_16_voltage
+                card_mod:
+                  style: |
+                    ha-card {
+                      {% set val = states('sensor.felicity_battery_100011002424520070_cell_16_voltage') | float(0) %}
+                      {% set min_v = states('sensor.felicity_battery_100011002424520070_min_cell_voltage') | float(0) %}
+                      {% set max_v = states('sensor.felicity_battery_100011002424520070_max_cell_voltage') | float(0) %}
+                      {% if val > 2.0 and max_v > 2.0 and (val - max_v) | abs <= 0.002 %}
+                        background: rgba(0, 188, 212, 0.25) !important;
+                        border: 1.5px solid #00bcd4 !important;
+                      {% elif val > 2.0 and min_v > 2.0 and (val - min_v) | abs <= 0.002 %}
+                        background: rgba(255, 87, 34, 0.25) !important;
+                        border: 1.5px solid #ff5722 !important;
+                      {% else %}
+                        background: rgba(255, 255, 255, 0.04) !important;
+                        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+                      {% endif %}
+                    }
 
           # ----------------------------------------------------------------------
           # 7. Лимиты BMS и Температурные датчики
