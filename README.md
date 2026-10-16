@@ -1,12 +1,16 @@
-# Felicity Solar ESS Home Assistant Integration
-
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-41BDF5.svg)](https://github.com/hacs/integration)
-[![GitHub release](https://img.shields.io/github/v/release/xpoh697/FelicityESS?include_prereleases&style=flat-square)](https://github.com/xpoh697/FelicityESS/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-
 <p align="center">
   <img src="custom_components/felicity_ess/brand/icon.png" width="160" alt="Felicity ESS Icon" />
 </p>
+
+<h1 align="center">Felicity Solar ESS — Home Assistant Integration</h1>
+
+<p align="center">
+  <a href="https://github.com/hacs/default"><img src="https://img.shields.io/badge/HACS-Custom-orange.svg" alt="HACS"></a>
+  <a href="https://github.com/xpoh697/FelicityESS/releases"><img src="https://img.shields.io/github/v/release/xpoh697/FelicityESS?include_prereleases" alt="Release"></a>
+  <a href="https://github.com/xpoh697/FelicityESS/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+</p>
+
+**Author:** [xpoh697](https://github.com/xpoh697)
 
 Custom integration for [Home Assistant](https://www.home-assistant.io/) to monitor **Felicity Solar** battery energy storage systems (ESS) and hybrid systems.
 
