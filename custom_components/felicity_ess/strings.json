@@ -18,6 +18,14 @@
           "scan_interval": "Update interval (seconds)"
         }
       },
+      "reconfigure": {
+        "title": "Reconfigure Battery Connection",
+        "description": "Update IP address and TCP port for this Felicity ESS battery.",
+        "data": {
+          "host": "Battery IP Address / Hostname",
+          "port": "TCP Port (default 53970)"
+        }
+      },
       "cloud": {
         "title": "Connect to Felicity Solar Cloud",
         "description": "Enter your Felicity Solar (Fsolar app) account credentials. Login can be Email, Phone number (as registered), or Username.",
@@ -46,6 +54,7 @@
       "cannot_connect": "Failed to connect to battery or cloud service.",
       "timeout": "Connection to battery timed out. Verify IP and that port 53970 is reachable.",
       "protocol_error": "Received invalid response from battery local TCP port.",
+      "device_mismatch": "The device at this IP address has a different serial number than the configured battery.",
       "user_not_found": "Account not found. If you registered in Fsolar with a mobile phone, enter that number (with or without country code).",
       "invalid_password": "Wrong account password. Please verify your Fsolar password.",
       "rsa_error": "Encryption error occurred while preparing credentials. Please try again.",
@@ -62,12 +71,21 @@
     "step": {
       "init": {
         "title": "Felicity ESS Settings",
-        "description": "Configure telemetry update parameters.",
+        "description": "Configure telemetry update and network connection parameters.",
         "data": {
+          "host": "Battery IP Address / Hostname",
+          "port": "TCP Port",
           "scan_interval": "Update interval (seconds, 5 - 300)",
           "invert_current": "Invert current sign (charging = negative)"
         }
       }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to battery at the specified IP and port.",
+      "timeout": "Connection to battery timed out. Verify IP and that port 53970 is reachable.",
+      "protocol_error": "Received invalid response from battery local TCP port.",
+      "device_mismatch": "The device at this IP address has a different serial number than the configured battery.",
+      "unknown": "Unexpected error occurred."
     }
   },
   "entity": {

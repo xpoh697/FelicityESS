@@ -159,6 +159,59 @@ class FelicityConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Handle reconfiguration of an existing Felicity entry (change IP/port)."""
+        entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
+        if not entry:
+            return self.async_abort(reason="unknown")
+
+        errors: dict[str, str] = {}
+        current_host = entry.data.get(CONF_HOST, "")
+        current_port = int(entry.data.get(CONF_PORT, DEFAULT_PORT))
+
+        if user_input is not None:
+            host = user_input[CONF_HOST].strip()
+            port = int(user_input.get(CONF_PORT, DEFAULT_PORT))
+
+            client = FelicityLocalClient(host, port, timeout=5.0, persistent=False)
+            try:
+                data = await client.async_get_data()
+            except FelicityLocalTimeoutError:
+                errors["base"] = "timeout"
+            except FelicityLocalConnectionError:
+                errors["base"] = "cannot_connect"
+            except FelicityLocalProtocolError:
+                errors["base"] = "protocol_error"
+            except FelicityLocalError:
+                errors["base"] = "cannot_connect"
+            except Exception:  # pylint: disable=broad-except
+                _LOGGER.exception("Unexpected error connecting to battery at %s:%s", host, port)
+                errors["base"] = "unknown"
+            else:
+                new_sn = str(data.get("DevSN") or data.get("wifiSN") or host)
+                current_sn = entry.data.get("serial_number")
+                if current_sn and new_sn != current_sn:
+                    errors["base"] = "device_mismatch"
+                else:
+                    return self.async_update_reload_and_abort(
+                        entry,
+                        data={**entry.data, CONF_HOST: host, CONF_PORT: port},
+                        title=f"Felicity Battery ({host})",
+                    )
+
+        return self.async_show_form(
+            step_id="reconfigure",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(CONF_HOST, default=current_host): str,
+                    vol.Optional(CONF_PORT, default=current_port): int,
+                }
+            ),
+            errors=errors,
+        )
+
     async def async_step_cloud(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
@@ -349,13 +402,60 @@ class FelicityOptionsFlowHandler(config_entries.OptionsFlow):
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Manage the options."""
-        if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
-
+        errors: dict[str, str] = {}
         is_local = (
             self.config_entry.data.get(CONF_CONNECTION_TYPE) == CONNECTION_TYPE_LOCAL
             or CONF_HOST in self.config_entry.data
         )
+
+        current_host = self.config_entry.data.get(CONF_HOST, "")
+        current_port = int(self.config_entry.data.get(CONF_PORT, DEFAULT_PORT))
+
+        if user_input is not None:
+            new_host = user_input.get(CONF_HOST, current_host).strip() if is_local else None
+            new_port = int(user_input.get(CONF_PORT, current_port)) if is_local else None
+
+            # If local host or port was changed, validate connectivity and serial number
+            if is_local and new_host and (new_host != current_host or new_port != current_port):
+                client = FelicityLocalClient(new_host, new_port, timeout=5.0, persistent=False)
+                try:
+                    data = await client.async_get_data()
+                except FelicityLocalTimeoutError:
+                    errors["base"] = "timeout"
+                except FelicityLocalConnectionError:
+                    errors["base"] = "cannot_connect"
+                except FelicityLocalProtocolError:
+                    errors["base"] = "protocol_error"
+                except FelicityLocalError:
+                    errors["base"] = "cannot_connect"
+                except Exception:
+                    _LOGGER.exception("Unexpected error connecting to battery at %s:%s", new_host, new_port)
+                    errors["base"] = "unknown"
+                else:
+                    new_sn = str(data.get("DevSN") or data.get("wifiSN") or new_host)
+                    current_sn = self.config_entry.data.get("serial_number")
+                    if current_sn and new_sn != current_sn:
+                        errors["base"] = "device_mismatch"
+                    else:
+                        # Update config_entry data and title with new host and port
+                        updated_data = {
+                            **self.config_entry.data,
+                            CONF_HOST: new_host,
+                            CONF_PORT: new_port,
+                        }
+                        self.hass.config_entries.async_update_entry(
+                            self.config_entry,
+                            data=updated_data,
+                            title=f"Felicity Battery ({new_host})",
+                        )
+
+            if not errors:
+                options_data = {
+                    CONF_SCAN_INTERVAL: user_input[CONF_SCAN_INTERVAL],
+                }
+                if is_local:
+                    options_data[CONF_INVERT_CURRENT] = user_input[CONF_INVERT_CURRENT]
+                return self.async_create_entry(title="", data=options_data)
 
         default_interval = DEFAULT_LOCAL_SCAN_INTERVAL if is_local else DEFAULT_SCAN_INTERVAL
         current_interval = self.config_entry.options.get(
@@ -363,15 +463,21 @@ class FelicityOptionsFlowHandler(config_entries.OptionsFlow):
             self.config_entry.data.get(CONF_SCAN_INTERVAL, default_interval),
         )
 
-        schema_dict: dict[Any, Any] = {
+        schema_dict: dict[Any, Any] = {}
+
+        if is_local:
+            schema_dict[vol.Required(CONF_HOST, default=current_host)] = str
+            schema_dict[vol.Optional(CONF_PORT, default=current_port)] = int
+
+        schema_dict[
             vol.Required(
                 CONF_SCAN_INTERVAL,
                 default=current_interval,
-            ): vol.All(
-                vol.Coerce(int),
-                vol.Range(min=MIN_SCAN_INTERVAL, max=MAX_SCAN_INTERVAL),
-            ),
-        }
+            )
+        ] = vol.All(
+            vol.Coerce(int),
+            vol.Range(min=MIN_SCAN_INTERVAL, max=MAX_SCAN_INTERVAL),
+        )
 
         if is_local:
             current_invert = self.config_entry.options.get(
@@ -388,4 +494,5 @@ class FelicityOptionsFlowHandler(config_entries.OptionsFlow):
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(schema_dict),
+            errors=errors,
         )
