@@ -326,11 +326,24 @@ class FelicityConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class FelicityOptionsFlowHandler(config_entries.OptionsFlow):
-    """Handle options for Felicity ESS."""
+    """Handle options for Felicity ESS across all Home Assistant versions."""
 
-    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
+    def __init__(self, config_entry: config_entries.ConfigEntry | None = None) -> None:
         """Initialize options flow."""
-        self.config_entry = config_entry
+        self._entry = config_entry
+
+    @property
+    def config_entry(self) -> config_entries.ConfigEntry:
+        """Return current config entry safely across all Home Assistant versions."""
+        if self._entry is not None:
+            return self._entry
+        try:
+            entry = super().config_entry
+            if entry is not None:
+                return entry
+        except (AttributeError, KeyError):
+            pass
+        return self.hass.config_entries.async_get_entry(self.handler)
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
@@ -339,7 +352,10 @@ class FelicityOptionsFlowHandler(config_entries.OptionsFlow):
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
-        is_local = self.config_entry.data.get(CONF_CONNECTION_TYPE) == CONNECTION_TYPE_LOCAL or CONF_HOST in self.config_entry.data
+        is_local = (
+            self.config_entry.data.get(CONF_CONNECTION_TYPE) == CONNECTION_TYPE_LOCAL
+            or CONF_HOST in self.config_entry.data
+        )
 
         default_interval = DEFAULT_LOCAL_SCAN_INTERVAL if is_local else DEFAULT_SCAN_INTERVAL
         current_interval = self.config_entry.options.get(
