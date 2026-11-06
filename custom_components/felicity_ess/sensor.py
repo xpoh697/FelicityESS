@@ -502,7 +502,7 @@ async def async_setup_entry(
     # Local TCP mode
     if isinstance(coordinator, FelicityLocalCoordinator):
         dev_sn = coordinator.dev_sn or coordinator.host
-        model = coordinator.profile.name if coordinator.profile else "Felicity Solar Battery"
+        model = coordinator.model_name or (coordinator.profile.name if coordinator.profile else "Felicity Solar Battery")
 
         for desc in LOCAL_BATTERY_SENSORS:
             entities.append(FelicityLocalBatterySensor(coordinator, desc, dev_sn, model))

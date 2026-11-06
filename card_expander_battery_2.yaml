@@ -1,0 +1,729 @@
+type: custom:expander-card
+title: Felicity Solar ESS BMS (Батарея 2 - Гараж)
+expand-id: felicity-battery-section-2
+expanded: false
+cards:
+  - type: custom:mushroom-chips-card
+    alignment: center
+    chips:
+      - type: template
+        entity: binary_sensor.garazh_felicity_battery_battery_online
+        icon: >
+          {{ 'mdi:wifi-check' if
+          is_state('binary_sensor.garazh_felicity_battery_battery_online',
+          'on') else 'mdi:wifi-alert' }}
+        icon_color: >
+          {{ 'green' if
+          is_state('binary_sensor.garazh_felicity_battery_battery_online',
+          'on') else 'red' }}
+        content: >
+          {{ 'Онлайн' if
+          is_state('binary_sensor.garazh_felicity_battery_battery_online',
+          'on') else 'Офлайн' }}
+      - type: template
+        entity: sensor.garazh_felicity_battery_state
+        icon: >
+          {% set s = states('sensor.garazh_felicity_battery_state')
+          %} {% if s == 'charging' %} mdi:battery-charging {% elif s ==
+          'discharging' %} mdi:battery-charging-low {% else %} mdi:battery-clock
+          {% endif %}
+        icon_color: >
+          {% set s = states('sensor.garazh_felicity_battery_state')
+          %} {% if s == 'charging' %} green {% elif s == 'discharging' %} orange
+          {% else %} blue {% endif %}
+        content: >
+          {% set s = states('sensor.garazh_felicity_battery_state')
+          %} {% if s == 'charging' %} Зарядка {% elif s == 'discharging' %}
+          Разрядка {% else %} Ожидание {% endif %}
+      - type: template
+        entity: sensor.garazh_felicity_battery_power
+        icon: mdi:flash
+        icon_color: >
+          {% set p = states('sensor.garazh_felicity_battery_power')
+          | float(0) %} {% if p > 50 %} green {% elif p < -50 %} orange {% else
+          %} grey {% endif %}
+        content: '{{ states(''sensor.garazh_felicity_battery_power'') }} Вт'
+      - type: template
+        entity: sensor.garazh_felicity_battery_max_cell_temperature
+        icon: mdi:thermometer
+        icon_color: >
+          {% set t =
+          states('sensor.garazh_felicity_battery_max_cell_temperature')
+          | float(25) %} {% if t > 40 %} red {% elif t > 30 %} orange {% else %}
+          green {% endif %}
+        content: >-
+          {{
+          states('sensor.garazh_felicity_battery_max_cell_temperature')
+          }} °C
+      - type: template
+        entity: sensor.garazh_felicity_battery_cycle_count
+        icon: mdi:sync
+        icon_color: purple
+        content: >-
+          {{ states('sensor.garazh_felicity_battery_cycle_count') }}
+          циклов
+  - type: gauge
+    entity: sensor.garazh_felicity_battery_state_of_charge
+    name: Заряд батареи (SOC)
+    min: 0
+    max: 100
+    needle: true
+    severity:
+      red: 0
+      yellow: 20
+      green: 50
+  - type: horizontal-stack
+    cards:
+      - type: custom:mushroom-template-card
+        primary: >-
+          {{
+          states('sensor.garazh_felicity_battery_state_of_health')
+          }}%
+        secondary: Здоровье (SOH)
+        icon: mdi:heart-pulse
+        icon_color: green
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_state_of_health
+      - type: custom:mushroom-template-card
+        primary: >-
+          {{ states('sensor.garazh_felicity_battery_capacity') }}
+          А·ч
+        secondary: Ном. емкость
+        icon: mdi:battery-check
+        icon_color: blue
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_capacity
+  - type: horizontal-stack
+    cards:
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: '{{ states(''sensor.garazh_felicity_battery_voltage'') }} В'
+        secondary: Напряжение
+        icon: mdi:sine-wave
+        icon_color: blue
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_voltage
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: '{{ states(''sensor.garazh_felicity_battery_current'') }} А'
+        secondary: Ток пака
+        icon: mdi:current-dc
+        icon_color: >
+          {% set c =
+          states('sensor.garazh_felicity_battery_current') |
+          float(0) %} {% if c > 0.5 %} green {% elif c < -0.5 %} orange {% else
+          %} blue {% endif %}
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_current
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: '{{ states(''sensor.garazh_felicity_battery_power'') }} Вт'
+        secondary: Мощность
+        icon: mdi:lightning-bolt
+        icon_color: >
+          {% set p = states('sensor.garazh_felicity_battery_power')
+          | float(0) %} {% if p > 50 %} green {% elif p < -50 %} orange {% else
+          %} blue {% endif %}
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_power
+  - type: custom:bubble-card
+    card_type: separator
+    name: Балансировка ячеек
+    icon: mdi:scale-balance
+  - type: horizontal-stack
+    cards:
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: >
+          {% set max_v =
+          states('sensor.garazh_felicity_battery_max_cell_voltage')
+          | float(0) %} {% set min_v =
+          states('sensor.garazh_felicity_battery_min_cell_voltage')
+          | float(0) %} {% if max_v > 0 and min_v > 0 %}
+            {{ ((max_v - min_v) * 1000) | round(0) }} мВ
+          {% else %}
+            — мВ
+          {% endif %}
+        secondary: Разброс ΔV
+        icon: mdi:delta
+        icon_color: >
+          {% set max_v =
+          states('sensor.garazh_felicity_battery_max_cell_voltage')
+          | float(0) %} {% set min_v =
+          states('sensor.garazh_felicity_battery_min_cell_voltage')
+          | float(0) %} {% set delta = (max_v - min_v) * 1000 %} {% if delta <=
+          20 %} green {% elif delta <= 40 %} amber {% else %} red {% endif %}
+        badge_icon: >
+          {% set max_v =
+          states('sensor.garazh_felicity_battery_max_cell_voltage')
+          | float(0) %} {% set min_v =
+          states('sensor.garazh_felicity_battery_min_cell_voltage')
+          | float(0) %} {% set delta = (max_v - min_v) * 1000 %} {% if delta >
+          40 %} mdi:alert {% elif delta <= 20 %} mdi:check {% endif %}
+        badge_color: >
+          {% set max_v =
+          states('sensor.garazh_felicity_battery_max_cell_voltage')
+          | float(0) %} {% set min_v =
+          states('sensor.garazh_felicity_battery_min_cell_voltage')
+          | float(0) %} {% set delta = (max_v - min_v) * 1000 %} {% if delta <=
+          20 %} green {% else %} red {% endif %}
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: >-
+          {{
+          states('sensor.garazh_felicity_battery_max_cell_voltage')
+          }} В
+        secondary: >-
+          Макс (№{{
+          states('sensor.garazh_felicity_battery_max_cell_number') |
+          int(0) + 1 }})
+        icon: mdi:arrow-up-bold-box
+        icon_color: cyan
+        badge_icon: mdi:crown
+        badge_color: cyan
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_max_cell_voltage
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: >-
+          {{
+          states('sensor.garazh_felicity_battery_min_cell_voltage')
+          }} В
+        secondary: >-
+          Мин (№{{
+          states('sensor.garazh_felicity_battery_min_cell_number') |
+          int(0) + 1 }})
+        icon: mdi:arrow-down-bold-box
+        icon_color: deep-orange
+        badge_icon: mdi:alert-circle-outline
+        badge_color: deep-orange
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_min_cell_voltage
+  - type: custom:bubble-card
+    card_type: separator
+    name: Напряжение ячеек (1 – 16)
+    icon: mdi:grid
+  - type: grid
+    columns: 4
+    square: false
+    cards:
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: Яч. 1
+        secondary: >-
+          {{ states('sensor.garazh_felicity_battery_cell_1_voltage')
+          }} В
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_cell_1_voltage
+        card_mod:
+          style: |
+            ha-card {
+              {% set max_idx = states('sensor.garazh_felicity_battery_max_cell_number') | int(-1) %}
+              {% set min_idx = states('sensor.garazh_felicity_battery_min_cell_number') | int(-1) %}
+              {% if max_idx == 0 %}
+                background: rgba(0, 188, 212, 0.25) !important;
+                border: 1.5px solid #00bcd4 !important;
+              {% elif min_idx == 0 %}
+                background: rgba(255, 87, 34, 0.25) !important;
+                border: 1.5px solid #ff5722 !important;
+              {% else %}
+                background: rgba(76, 175, 80, 0.18) !important;
+                border: 1.5px solid rgba(76, 175, 80, 0.4) !important;
+              {% endif %}
+            }
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: Яч. 2
+        secondary: >-
+          {{ states('sensor.garazh_felicity_battery_cell_2_voltage')
+          }} В
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_cell_2_voltage
+        card_mod:
+          style: |
+            ha-card {
+              {% set max_idx = states('sensor.garazh_felicity_battery_max_cell_number') | int(-1) %}
+              {% set min_idx = states('sensor.garazh_felicity_battery_min_cell_number') | int(-1) %}
+              {% if max_idx == 1 %}
+                background: rgba(0, 188, 212, 0.25) !important;
+                border: 1.5px solid #00bcd4 !important;
+              {% elif min_idx == 1 %}
+                background: rgba(255, 87, 34, 0.25) !important;
+                border: 1.5px solid #ff5722 !important;
+              {% else %}
+                background: rgba(76, 175, 80, 0.18) !important;
+                border: 1.5px solid rgba(76, 175, 80, 0.4) !important;
+              {% endif %}
+            }
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: Яч. 3
+        secondary: >-
+          {{ states('sensor.garazh_felicity_battery_cell_3_voltage')
+          }} В
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_cell_3_voltage
+        card_mod:
+          style: |
+            ha-card {
+              {% set max_idx = states('sensor.garazh_felicity_battery_max_cell_number') | int(-1) %}
+              {% set min_idx = states('sensor.garazh_felicity_battery_min_cell_number') | int(-1) %}
+              {% if max_idx == 2 %}
+                background: rgba(0, 188, 212, 0.25) !important;
+                border: 1.5px solid #00bcd4 !important;
+              {% elif min_idx == 2 %}
+                background: rgba(255, 87, 34, 0.25) !important;
+                border: 1.5px solid #ff5722 !important;
+              {% else %}
+                background: rgba(76, 175, 80, 0.18) !important;
+                border: 1.5px solid rgba(76, 175, 80, 0.4) !important;
+              {% endif %}
+            }
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: Яч. 4
+        secondary: >-
+          {{ states('sensor.garazh_felicity_battery_cell_4_voltage')
+          }} В
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_cell_4_voltage
+        card_mod:
+          style: |
+            ha-card {
+              {% set max_idx = states('sensor.garazh_felicity_battery_max_cell_number') | int(-1) %}
+              {% set min_idx = states('sensor.garazh_felicity_battery_min_cell_number') | int(-1) %}
+              {% if max_idx == 3 %}
+                background: rgba(0, 188, 212, 0.25) !important;
+                border: 1.5px solid #00bcd4 !important;
+              {% elif min_idx == 3 %}
+                background: rgba(255, 87, 34, 0.25) !important;
+                border: 1.5px solid #ff5722 !important;
+              {% else %}
+                background: rgba(76, 175, 80, 0.18) !important;
+                border: 1.5px solid rgba(76, 175, 80, 0.4) !important;
+              {% endif %}
+            }
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: Яч. 5
+        secondary: >-
+          {{ states('sensor.garazh_felicity_battery_cell_5_voltage')
+          }} В
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_cell_5_voltage
+        card_mod:
+          style: |
+            ha-card {
+              {% set max_idx = states('sensor.garazh_felicity_battery_max_cell_number') | int(-1) %}
+              {% set min_idx = states('sensor.garazh_felicity_battery_min_cell_number') | int(-1) %}
+              {% if max_idx == 4 %}
+                background: rgba(0, 188, 212, 0.25) !important;
+                border: 1.5px solid #00bcd4 !important;
+              {% elif min_idx == 4 %}
+                background: rgba(255, 87, 34, 0.25) !important;
+                border: 1.5px solid #ff5722 !important;
+              {% else %}
+                background: rgba(76, 175, 80, 0.18) !important;
+                border: 1.5px solid rgba(76, 175, 80, 0.4) !important;
+              {% endif %}
+            }
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: Яч. 6
+        secondary: >-
+          {{ states('sensor.garazh_felicity_battery_cell_6_voltage')
+          }} В
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_cell_6_voltage
+        card_mod:
+          style: |
+            ha-card {
+              {% set max_idx = states('sensor.garazh_felicity_battery_max_cell_number') | int(-1) %}
+              {% set min_idx = states('sensor.garazh_felicity_battery_min_cell_number') | int(-1) %}
+              {% if max_idx == 5 %}
+                background: rgba(0, 188, 212, 0.25) !important;
+                border: 1.5px solid #00bcd4 !important;
+              {% elif min_idx == 5 %}
+                background: rgba(255, 87, 34, 0.25) !important;
+                border: 1.5px solid #ff5722 !important;
+              {% else %}
+                background: rgba(76, 175, 80, 0.18) !important;
+                border: 1.5px solid rgba(76, 175, 80, 0.4) !important;
+              {% endif %}
+            }
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: Яч. 7
+        secondary: >-
+          {{ states('sensor.garazh_felicity_battery_cell_7_voltage')
+          }} В
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_cell_7_voltage
+        card_mod:
+          style: |
+            ha-card {
+              {% set max_idx = states('sensor.garazh_felicity_battery_max_cell_number') | int(-1) %}
+              {% set min_idx = states('sensor.garazh_felicity_battery_min_cell_number') | int(-1) %}
+              {% if max_idx == 6 %}
+                background: rgba(0, 188, 212, 0.25) !important;
+                border: 1.5px solid #00bcd4 !important;
+              {% elif min_idx == 6 %}
+                background: rgba(255, 87, 34, 0.25) !important;
+                border: 1.5px solid #ff5722 !important;
+              {% else %}
+                background: rgba(76, 175, 80, 0.18) !important;
+                border: 1.5px solid rgba(76, 175, 80, 0.4) !important;
+              {% endif %}
+            }
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: Яч. 8
+        secondary: >-
+          {{ states('sensor.garazh_felicity_battery_cell_8_voltage')
+          }} В
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_cell_8_voltage
+        card_mod:
+          style: |
+            ha-card {
+              {% set max_idx = states('sensor.garazh_felicity_battery_max_cell_number') | int(-1) %}
+              {% set min_idx = states('sensor.garazh_felicity_battery_min_cell_number') | int(-1) %}
+              {% if max_idx == 7 %}
+                background: rgba(0, 188, 212, 0.25) !important;
+                border: 1.5px solid #00bcd4 !important;
+              {% elif min_idx == 7 %}
+                background: rgba(255, 87, 34, 0.25) !important;
+                border: 1.5px solid #ff5722 !important;
+              {% else %}
+                background: rgba(76, 175, 80, 0.18) !important;
+                border: 1.5px solid rgba(76, 175, 80, 0.4) !important;
+              {% endif %}
+            }
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: Яч. 9
+        secondary: >-
+          {{ states('sensor.garazh_felicity_battery_cell_9_voltage')
+          }} В
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_cell_9_voltage
+        card_mod:
+          style: |
+            ha-card {
+              {% set max_idx = states('sensor.garazh_felicity_battery_max_cell_number') | int(-1) %}
+              {% set min_idx = states('sensor.garazh_felicity_battery_min_cell_number') | int(-1) %}
+              {% if max_idx == 8 %}
+                background: rgba(0, 188, 212, 0.25) !important;
+                border: 1.5px solid #00bcd4 !important;
+              {% elif min_idx == 8 %}
+                background: rgba(255, 87, 34, 0.25) !important;
+                border: 1.5px solid #ff5722 !important;
+              {% else %}
+                background: rgba(76, 175, 80, 0.18) !important;
+                border: 1.5px solid rgba(76, 175, 80, 0.4) !important;
+              {% endif %}
+            }
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: Яч. 10
+        secondary: >-
+          {{
+          states('sensor.garazh_felicity_battery_cell_10_voltage')
+          }} В
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_cell_10_voltage
+        card_mod:
+          style: |
+            ha-card {
+              {% set max_idx = states('sensor.garazh_felicity_battery_max_cell_number') | int(-1) %}
+              {% set min_idx = states('sensor.garazh_felicity_battery_min_cell_number') | int(-1) %}
+              {% if max_idx == 9 %}
+                background: rgba(0, 188, 212, 0.25) !important;
+                border: 1.5px solid #00bcd4 !important;
+              {% elif min_idx == 9 %}
+                background: rgba(255, 87, 34, 0.25) !important;
+                border: 1.5px solid #ff5722 !important;
+              {% else %}
+                background: rgba(76, 175, 80, 0.18) !important;
+                border: 1.5px solid rgba(76, 175, 80, 0.4) !important;
+              {% endif %}
+            }
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: Яч. 11
+        secondary: >-
+          {{
+          states('sensor.garazh_felicity_battery_cell_11_voltage')
+          }} В
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_cell_11_voltage
+        card_mod:
+          style: |
+            ha-card {
+              {% set max_idx = states('sensor.garazh_felicity_battery_max_cell_number') | int(-1) %}
+              {% set min_idx = states('sensor.garazh_felicity_battery_min_cell_number') | int(-1) %}
+              {% if max_idx == 10 %}
+                background: rgba(0, 188, 212, 0.25) !important;
+                border: 1.5px solid #00bcd4 !important;
+              {% elif min_idx == 10 %}
+                background: rgba(255, 87, 34, 0.25) !important;
+                border: 1.5px solid #ff5722 !important;
+              {% else %}
+                background: rgba(76, 175, 80, 0.18) !important;
+                border: 1.5px solid rgba(76, 175, 80, 0.4) !important;
+              {% endif %}
+            }
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: Яч. 12
+        secondary: >-
+          {{
+          states('sensor.garazh_felicity_battery_cell_12_voltage')
+          }} В
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_cell_12_voltage
+        card_mod:
+          style: |
+            ha-card {
+              {% set max_idx = states('sensor.garazh_felicity_battery_max_cell_number') | int(-1) %}
+              {% set min_idx = states('sensor.garazh_felicity_battery_min_cell_number') | int(-1) %}
+              {% if max_idx == 11 %}
+                background: rgba(0, 188, 212, 0.25) !important;
+                border: 1.5px solid #00bcd4 !important;
+              {% elif min_idx == 11 %}
+                background: rgba(255, 87, 34, 0.25) !important;
+                border: 1.5px solid #ff5722 !important;
+              {% else %}
+                background: rgba(76, 175, 80, 0.18) !important;
+                border: 1.5px solid rgba(76, 175, 80, 0.4) !important;
+              {% endif %}
+            }
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: Яч. 13
+        secondary: >-
+          {{
+          states('sensor.garazh_felicity_battery_cell_13_voltage')
+          }} В
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_cell_13_voltage
+        card_mod:
+          style: |
+            ha-card {
+              {% set max_idx = states('sensor.garazh_felicity_battery_max_cell_number') | int(-1) %}
+              {% set min_idx = states('sensor.garazh_felicity_battery_min_cell_number') | int(-1) %}
+              {% if max_idx == 12 %}
+                background: rgba(0, 188, 212, 0.25) !important;
+                border: 1.5px solid #00bcd4 !important;
+              {% elif min_idx == 12 %}
+                background: rgba(255, 87, 34, 0.25) !important;
+                border: 1.5px solid #ff5722 !important;
+              {% else %}
+                background: rgba(76, 175, 80, 0.18) !important;
+                border: 1.5px solid rgba(76, 175, 80, 0.4) !important;
+              {% endif %}
+            }
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: Яч. 14
+        secondary: >-
+          {{
+          states('sensor.garazh_felicity_battery_cell_14_voltage')
+          }} В
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_cell_14_voltage
+        card_mod:
+          style: |
+            ha-card {
+              {% set max_idx = states('sensor.garazh_felicity_battery_max_cell_number') | int(-1) %}
+              {% set min_idx = states('sensor.garazh_felicity_battery_min_cell_number') | int(-1) %}
+              {% if max_idx == 13 %}
+                background: rgba(0, 188, 212, 0.25) !important;
+                border: 1.5px solid #00bcd4 !important;
+              {% elif min_idx == 13 %}
+                background: rgba(255, 87, 34, 0.25) !important;
+                border: 1.5px solid #ff5722 !important;
+              {% else %}
+                background: rgba(76, 175, 80, 0.18) !important;
+                border: 1.5px solid rgba(76, 175, 80, 0.4) !important;
+              {% endif %}
+            }
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: Яч. 15
+        secondary: >-
+          {{
+          states('sensor.garazh_felicity_battery_cell_15_voltage')
+          }} В
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_cell_15_voltage
+        card_mod:
+          style: |
+            ha-card {
+              {% set max_idx = states('sensor.garazh_felicity_battery_max_cell_number') | int(-1) %}
+              {% set min_idx = states('sensor.garazh_felicity_battery_min_cell_number') | int(-1) %}
+              {% if max_idx == 14 %}
+                background: rgba(0, 188, 212, 0.25) !important;
+                border: 1.5px solid #00bcd4 !important;
+              {% elif min_idx == 14 %}
+                background: rgba(255, 87, 34, 0.25) !important;
+                border: 1.5px solid #ff5722 !important;
+              {% else %}
+                background: rgba(76, 175, 80, 0.18) !important;
+                border: 1.5px solid rgba(76, 175, 80, 0.4) !important;
+              {% endif %}
+            }
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: Яч. 16
+        secondary: >-
+          {{
+          states('sensor.garazh_felicity_battery_cell_16_voltage')
+          }} В
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_cell_16_voltage
+        card_mod:
+          style: |
+            ha-card {
+              {% set max_idx = states('sensor.garazh_felicity_battery_max_cell_number') | int(-1) %}
+              {% set min_idx = states('sensor.garazh_felicity_battery_min_cell_number') | int(-1) %}
+              {% if max_idx == 15 %}
+                background: rgba(0, 188, 212, 0.25) !important;
+                border: 1.5px solid #00bcd4 !important;
+              {% elif min_idx == 15 %}
+                background: rgba(255, 87, 34, 0.25) !important;
+                border: 1.5px solid #ff5722 !important;
+              {% else %}
+                background: rgba(76, 175, 80, 0.18) !important;
+                border: 1.5px solid rgba(76, 175, 80, 0.4) !important;
+              {% endif %}
+            }
+  - type: custom:bubble-card
+    card_type: separator
+    name: Лимиты BMS и Температуры
+    icon: mdi:shield-check
+  - type: horizontal-stack
+    cards:
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: >-
+          {{
+          states('sensor.garazh_felicity_battery_charge_current_limit')
+          }} А
+        secondary: Лимит заряда
+        icon: mdi:battery-arrow-up
+        icon_color: green
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_charge_current_limit
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: >-
+          {{
+          states('sensor.garazh_felicity_battery_discharge_current_limit')
+          }} А
+        secondary: Лимит разряда
+        icon: mdi:battery-arrow-down
+        icon_color: orange
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_discharge_current_limit
+  - type: horizontal-stack
+    cards:
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: >-
+          {{
+          states('sensor.garazh_felicity_battery_charge_voltage_limit')
+          }} В
+        secondary: Макс. напр.
+        icon: mdi:arrow-up-bold-circle
+        icon_color: green
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_charge_voltage_limit
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: >-
+          {{
+          states('sensor.garazh_felicity_battery_discharge_voltage_limit')
+          }} В
+        secondary: Мин. напр.
+        icon: mdi:arrow-down-bold-circle
+        icon_color: orange
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_discharge_voltage_limit
+  - type: grid
+    columns: 4
+    square: false
+    cards:
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: >-
+          {{ states('sensor.garazh_felicity_battery_temperature_1')
+          }} °C
+        secondary: Зонд 1
+        icon: mdi:thermometer
+        icon_color: blue
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_temperature_1
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: >-
+          {{ states('sensor.garazh_felicity_battery_temperature_2')
+          }} °C
+        secondary: Зонд 2
+        icon: mdi:thermometer
+        icon_color: blue
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_temperature_2
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: >-
+          {{ states('sensor.garazh_felicity_battery_temperature_3')
+          }} °C
+        secondary: Зонд 3
+        icon: mdi:thermometer
+        icon_color: blue
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_temperature_3
+      - type: custom:mushroom-template-card
+        layout: vertical
+        primary: >-
+          {{ states('sensor.garazh_felicity_battery_temperature_4')
+          }} °C
+        secondary: Зонд 4
+        icon: mdi:thermometer
+        icon_color: blue
+        tap_action:
+          action: more-info
+          entity: sensor.garazh_felicity_battery_temperature_4
+icon: mdi:battery-charging-wireless-50
+animation: true

@@ -39,7 +39,7 @@ async def async_setup_entry(
     # Local TCP mode
     if isinstance(coordinator, FelicityLocalCoordinator):
         dev_sn = coordinator.dev_sn or coordinator.host
-        model = coordinator.profile.name if coordinator.profile else "Felicity Solar Battery"
+        model = coordinator.model_name or (coordinator.profile.name if coordinator.profile else "Felicity Solar Battery")
         entities.extend([
             FelicityLocalBatteryOnlineBinarySensor(coordinator, dev_sn, model),
             FelicityLocalBatteryProblemBinarySensor(coordinator, dev_sn, model),

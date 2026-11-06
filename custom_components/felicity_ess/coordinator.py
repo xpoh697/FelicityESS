@@ -24,7 +24,7 @@ from .local_client import (
     FelicityLocalProtocolError,
     FelicityLocalTimeoutError,
 )
-from .profiles import BatteryProfile, select_profile
+from .profiles import BatteryProfile, resolve_model_name, select_profile
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -75,6 +75,7 @@ class FelicityLocalCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         self.invert_current = invert_current
         self.dev_sn = dev_sn
         self.profile: BatteryProfile | None = None
+        self.model_name: str | None = None
         self._tz_offset_minutes: int | None = None
 
     async def _async_update_data(self) -> dict[str, Any]:
@@ -101,6 +102,8 @@ class FelicityLocalCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                     self.host,
                 )
 
+            self.model_name = resolve_model_name(raw, self.profile)
+
             parsed = self.profile.parse(raw)
 
             # Invert current sign if requested
@@ -117,6 +120,7 @@ class FelicityLocalCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 "parsed": parsed,
                 "raw": raw,
                 "profile_name": self.profile.name,
+                "model_name": self.model_name,
                 "serial_number": self.dev_sn or self.host,
             }
 

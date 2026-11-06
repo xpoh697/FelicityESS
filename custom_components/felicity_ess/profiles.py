@@ -5,6 +5,8 @@ Verified models:
 - FLB48314TG1-H (Type=112, SubType=7353): 48V 16S, 2x2 temperature matrix.
 - FLA24100 (Type=112, SubType=6100): 24V 8S, temperatures in BtemList.
 - FLA48300 (Type=112, SubType=7300): 48V 16S with BmsCnt (cycle count).
+- LUX-Y-48300LG01: 48V 16S, 300Ah LUX-Y series pack (starts with 100011).
+- FLA48280TG2-EU: 48V 16S, 280Ah modern TG2 pack (starts with 0758048280).
 - Generic fallback for unverified / newer models.
 """
 
@@ -14,6 +16,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 import logging
+import re
 from typing import Any
 
 try:
@@ -89,6 +92,33 @@ def _device_timestamp(raw: dict[str, Any]) -> datetime | None:
     return naive.replace(tzinfo=tzinfo)
 
 
+def resolve_model_name(raw: dict[str, Any], profile: BatteryProfile | None = None) -> str:
+    """Resolve accurate model name from device serial number with safe profile fallback."""
+    sn = str(raw.get("DevSN") or raw.get("wifiSN") or "").strip()
+    if sn.startswith(("F", "f")):
+        sn = sn[1:].strip()
+
+    # 1. LUX-Y series (18-digit serial starting with 100011 or 10...)
+    if sn.startswith("100011") or (len(sn) == 18 and sn.startswith("10")):
+        return "LUX-Y-48300LG01"
+
+    # 2. Modern Felicity serial format: 07(series)(voltage)(capacity)...
+    m = re.match(r"^07(\d{2})(\d{3})(\d{3})", sn)
+    if m:
+        series_code, volt_str, cap_str = m.groups()
+        volt = int(volt_str)
+        cap = int(cap_str)
+        if series_code == "58":
+            return f"FLA{volt}{cap}TG2-EU" if cap == 280 else f"FLA{volt}{cap}TG2"
+        if series_code == "57":
+            return f"FLB{volt}{cap}TG1-H" if cap == 314 else f"FLB{volt}{cap}"
+        return f"FLA{volt}{cap}"
+
+    if profile and profile.name:
+        return profile.name
+    return "Felicity Solar Battery"
+
+
 def parse_common(raw: dict[str, Any]) -> dict[str, Any]:
     """Parse common telemetry registers for Felicity battery packs."""
     voltage = _scaled(raw, "BattList", 0, 0, 1000, 2)
@@ -108,6 +138,15 @@ def parse_common(raw: dict[str, Any]) -> dict[str, Any]:
     temp_4 = _scaled(raw, "BTemp", 1, 1, 10, 1)
     valid_temps = [t for t in (temp_1, temp_2, temp_3, temp_4) if t is not None]
 
+    capacity = _scaled(raw, "BatsocList", 0, 2, 1000, 1)
+    model_name = resolve_model_name(raw)
+
+    # Correct factory firmware quirk where FLA48280TG2-EU BMS reports 300000 (300 Ah) instead of 280 Ah
+    if model_name == "FLA48280TG2-EU" or (
+        isinstance(capacity, (int, float)) and capacity == 300.0 and "280" in model_name
+    ):
+        capacity = 280.0
+
     data: dict[str, Any] = {
         "voltage": voltage,
         "current": current,
@@ -115,7 +154,8 @@ def parse_common(raw: dict[str, Any]) -> dict[str, Any]:
         "charging_state": _charging_state(bstate),
         "soc": _scaled(raw, "BatsocList", 0, 0, 100, 1),
         "soh": _scaled(raw, "BatsocList", 0, 1, 10, 1),
-        "capacity": _scaled(raw, "BatsocList", 0, 2, 1000, 1),
+        "capacity": capacity,
+        "model_name": model_name,
         "cycle_count": _raw(raw, "BmsCnt"),
         "max_cell_voltage": _scaled(raw, "BMaxMin", 0, 0, 1000, 3),
         "min_cell_voltage": _scaled(raw, "BMaxMin", 0, 1, 1000, 3),
