@@ -3,9 +3,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import logging
+import time
 from typing import Any, Callable
 
 from homeassistant.components.sensor import (
+    RestoreSensor,
     SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
@@ -21,7 +23,7 @@ from homeassistant.const import (
     UnitOfPower,
     UnitOfTemperature,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -435,8 +437,8 @@ CLOUD_BATTERY_SENSORS: tuple[FelicitySensorEntityDescription, ...] = (
         key="max_cell_voltage",
         translation_key="max_cell_voltage",
         name="Max Cell Voltage",
-        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda b: safe_float(b.get("maxVoltage2bms") or b.get("maxCellVolt")),
@@ -445,8 +447,8 @@ CLOUD_BATTERY_SENSORS: tuple[FelicitySensorEntityDescription, ...] = (
         key="min_cell_voltage",
         translation_key="min_cell_voltage",
         name="Min Cell Voltage",
-        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
         value_fn=lambda b: safe_float(b.get("minVoltage2bms") or b.get("minCellVolt")),
@@ -511,6 +513,12 @@ async def async_setup_entry(
         for cell_idx in range(1, 17):
             entities.append(
                 FelicityLocalCellVoltageSensor(coordinator, dev_sn, model, cell_idx)
+            )
+
+        # Cumulative energy meters (total_charge and total_discharge for HA Energy Dashboard)
+        for energy_type in ("total_charge", "total_discharge"):
+            entities.append(
+                FelicityLocalEnergySensor(coordinator, dev_sn, model, energy_type)
             )
 
         async_add_entities(entities)
@@ -638,6 +646,102 @@ class FelicityLocalCellVoltageSensor(CoordinatorEntity[FelicityLocalCoordinator]
         if val is None or val <= 0 or val > 10.0:
             return None
         return val
+
+
+class FelicityLocalEnergySensor(CoordinatorEntity[FelicityLocalCoordinator], RestoreSensor):
+    """Sensor for accumulated battery charge/discharge energy over direct local TCP."""
+
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+    _attr_suggested_display_precision = 2
+
+    def __init__(
+        self,
+        coordinator: FelicityLocalCoordinator,
+        device_sn: str,
+        device_model: str,
+        sensor_type: str,
+    ) -> None:
+        """Initialize local energy sensor."""
+        super().__init__(coordinator)
+        self._device_sn = device_sn
+        self._sensor_type = sensor_type
+        self._attr_unique_id = f"local_{device_sn}_{sensor_type}"
+        self._attr_translation_key = sensor_type
+        self._attr_name = (
+            "Total Energy Charged" if sensor_type == "total_charge" else "Total Energy Discharged"
+        )
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, device_sn)},
+            name="Felicity Battery",
+            manufacturer=MANUFACTURER,
+            model=device_model,
+            serial_number=device_sn,
+        )
+        self._state: float = 0.0
+        self._last_update_time: float | None = None
+
+    async def async_added_to_hass(self) -> None:
+        """Restore state when entity is added to hass."""
+        await super().async_added_to_hass()
+        if (last_sensor_data := await self.async_get_last_sensor_data()) is not None:
+            try:
+                self._state = float(last_sensor_data.native_value)
+            except (ValueError, TypeError):
+                pass
+        elif (last_state := await self.async_get_last_state()) is not None:
+            try:
+                self._state = float(last_state.state)
+            except (ValueError, TypeError):
+                pass
+        self._last_update_time = time.monotonic()
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator and integrate energy."""
+        now = time.monotonic()
+        if self._last_update_time is None or not self.coordinator.last_update_success:
+            self._last_update_time = now
+            return
+
+        dt = now - self._last_update_time
+        self._last_update_time = now
+
+        # Spike protection: ignore gaps longer than 2x update interval (or 60s)
+        max_gap = (
+            max(60.0, self.coordinator.update_interval.total_seconds() * 2)
+            if self.coordinator.update_interval
+            else 60.0
+        )
+        if dt <= 0 or dt > max_gap:
+            return
+
+        parsed = self.coordinator.data.get("parsed", {})
+        voltage = parsed.get("voltage")
+        current = parsed.get("current")
+        charging_state = parsed.get("charging_state")
+
+        if voltage is None or current is None or voltage <= 0:
+            return
+
+        power_watts = abs(voltage * current)
+        if power_watts < 5.0:  # noise floor filter
+            return
+
+        delta_kwh = (power_watts / 1000.0) * (dt / 3600.0)
+
+        if self._sensor_type == "total_charge" and charging_state == "charging":
+            self._state += delta_kwh
+            self.async_write_ha_state()
+        elif self._sensor_type == "total_discharge" and charging_state == "discharging":
+            self._state += delta_kwh
+            self.async_write_ha_state()
+
+    @property
+    def native_value(self) -> float:
+        """Return the accumulated energy in kWh."""
+        return round(self._state, 2)
 
 
 # =========================================================================

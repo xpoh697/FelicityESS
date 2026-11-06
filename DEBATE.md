@@ -2013,3 +2013,124 @@ class FelicityOptionsFlowHandler(config_entries.OptionsFlow):
 2. Добавить обработчик `async_step_reconfigure` в `FelicityConfigFlow`.
 3. Обновить файлы локализации (`strings.json`, `ru.json`, `en.json`).
 4. Предложить финальный код пользователю и после одобрения применить ко всем файлам целиком (без автозамен), задеплоить и запушить.
+
+
+---
+
+## [2026-11-06 19:45] Задача: Надо сосздать два сенсора tatal_charge и total_discharge которые будут мерять сколько энергии заряжено и разряжено
+
+**Контекст задачи:**
+Пользователь запросил создание двух накопительных сенсоров энергоучета:
+- `total_charge` — суммарная энергия заряда аккумулятора (кВт·ч);
+- `total_discharge` — суммарная энергия разряда аккумулятора (кВт·ч).
+Сенсоры должны измерять накопленную энергию на основе мощности и тока батареи, сохранять свои показания между перезапусками Home Assistant и быть пригодными для интеграции в штатную панель «Энергия» (Home Assistant Energy Dashboard).
+
+---
+
+### Итерация 1
+
+### Archi
+
+**Архитектурное решение:**
+1. **Нативная интеграция сенсоров энергии:**
+   - Добавить в `sensor.py` два новых сенсора:
+     - `total_charge` (Total Energy Charged)
+     - `total_discharge` (Total Energy Discharged)
+   - Класс устройства: `device_class = SensorDeviceClass.ENERGY`
+   - Класс состояния: `state_class = SensorStateClass.TOTAL_INCREASING`
+   - Единица измерения: `native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR` (кВт·ч)
+   - Точность: `suggested_display_precision = 2`
+2. **Алгоритм численного интегрирования:**
+   - На каждом цикле обновления координатора (по умолчанию каждые 15 секунд) вычисляется временной интервал $\Delta t = t_{now} - t_{prev}$ в секундах.
+   - Мгновенная мощность берется как $P = |V \cdot I|$ (Вт). В киловаттах: $P_{kW} = P / 1000$.
+   - Приращение энергии за интервал: $\Delta E = P_{kW} \cdot \frac{\Delta t}{3600}$ (кВт·ч).
+   - Если режим батареи `charging` $\rightarrow$ накапливаем в `total_charge`.
+   - Если режим батареи `discharging` $\rightarrow$ накапливаем в `total_discharge`.
+3. **Персистентность (сохранение при перезапусках):**
+   - Наследуем класс сенсора от `RestoreSensor` (`homeassistant.components.sensor.RestoreSensor`).
+   - При старте Home Assistant значение восстанавливается из базы через `async_get_last_sensor_data()` / `async_get_last_state()`.
+
+---
+
+### Skeptic
+
+**Критика и 3 ключевых риска:**
+1. **Аномалии при перезапуске и обрыве связи (Spike Protection):**
+   Если сервер Home Assistant был выключен 10 часов или батарея временно теряла Wi-Fi, прямое вычисление $\Delta t = now - last\_time$ умножит мгновенную мощность на 10 часов простоя и добавит сотни ложных киловатт-часов! Это безвозвратно испортит графики в панели «Энергия».
+   *Требование:* Ввести защитный лимит: если $\Delta t > 2 \times \text{scan\_interval}$ (или $> 60$ секунд), либо если предыдущий опрос завершился ошибкой (`last_update_success == False`), отбрасывать интеграл за период простоя ($\Delta t = 0$) и просто фиксировать текущую временную метку.
+2. **Инициализация и тип данных (TOTAL_INCREASING Integrity):**
+   Для сенсоров класса `TOTAL_INCREASING` возврат `None` или сброс в 0 после того, как сенсор уже имел значение, вызывает предупреждения ядра Home Assistant о сбросе счетчика.
+   *Требование:* При первой установке инициализировать значение `0.0`. При перезапусках гарантированно восстанавливать последнее сохраненное число `float`. Хранить внутреннее состояние с высокой точностью (6 знаков), а отображать округленным до 2 знаков (`round(self._state, 2)`).
+3. **Защита от инверсии знака тока (`invert_current`):**
+   Пользователь может включить опцию `invert_current` в настройках интеграции. Если алгоритм будет наивно проверять знак `current > 0`, включение инверсии перепутает заряд с разрядом.
+   *Требование:* Для разделения потоков заряда и разряда использовать официальный статус BMS `charging_state` (`charging` / `discharging`), а величину мощности брать строго по модулю $|V \cdot I|$.
+
+---
+
+### Итерация 2
+
+### Archi
+
+**Доработка решения:**
+Создан надежный класс `FelicityLocalEnergySensor(CoordinatorEntity[FelicityLocalCoordinator], RestoreSensor)`:
+1. **Защита от скачков:**
+   ```python
+   now = time.monotonic()
+   if self._last_update_time is None or not self.coordinator.last_update_success:
+       self._last_update_time = now
+       return
+   
+   dt = now - self._last_update_time
+   self._last_update_time = now
+   
+   # Отсечка: если задержка опроса превысила 2x интервал (макс 60 с), не интегрируем простой
+   max_gap = max(60.0, self.coordinator.update_interval.total_seconds() * 2)
+   if dt <= 0 or dt > max_gap:
+       return
+   ```
+2. **Безопасное определение потока энергии:**
+   ```python
+   parsed = self.coordinator.data.get("parsed", {})
+   voltage = parsed.get("voltage")
+   current = parsed.get("current")
+   state = parsed.get("charging_state")
+   
+   if voltage is None or current is None or voltage <= 0:
+       return
+   
+   power_watts = abs(voltage * current)
+   if power_watts < 5.0:  # порог отсечки шума 5 Вт
+       return
+   
+   delta_kwh = (power_watts / 1000.0) * (dt / 3600.0)
+   
+   if self._sensor_type == "total_charge" and state == "charging":
+       self._state += delta_kwh
+       self.async_write_ha_state()
+   elif self._sensor_type == "total_discharge" and state == "discharging":
+       self._state += delta_kwh
+       self.async_write_ha_state()
+   ```
+3. **Восстановление состояния:**
+   В `async_added_to_hass` значение восстанавливается через `async_get_last_sensor_data()`, обеспечивая непрерывность счетчиков при любых перезапусках HA.
+4. Добавлены переводы в `strings.json`, `translations/ru.json` и `translations/en.json`.
+
+---
+
+### Skeptic
+
+**Оценка доработок:**
+1. Защита от временных дыр (`max_gap`) полностью исключает ложные всплески в энергоучете.
+2. Использование `charging_state` из BMS регистров гарантирует корректность независимо от флага `invert_current`.
+3. Порог шума 5 Вт отсекает микротоки балансировки в режиме покоя.
+4. Класс `RestoreSensor` гарантирует сохранность данных при перезагрузках HA.
+Консенсус достигнут. Готово к утверждению пользователем.
+
+---
+
+### Заключение
+
+1. Внедрить класс `FelicityLocalEnergySensor` в `custom_components/felicity_ess/sensor.py` для сущностей `total_charge` и `total_discharge`.
+2. Добавить сущности в список локальных сенсоров при `async_setup_entry`.
+3. Добавить локализацию в `strings.json`, `translations/ru.json` и `translations/en.json`.
+4. Предложить финальный код пользователю и после одобрения применить ко всем файлам проекта целиком (без автозамен), задеплоить и запушить.

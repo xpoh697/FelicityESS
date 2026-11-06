@@ -103,6 +103,8 @@
       "charging_state": { "name": "State" },
       "capacity": { "name": "Capacity" },
       "cycle_count": { "name": "Cycle Count" },
+      "total_charge": { "name": "Total Energy Charged" },
+      "total_discharge": { "name": "Total Energy Discharged" },
       "bms_charge_current_limit": { "name": "BMS Charge Current Limit" },
       "bms_discharge_current_limit": { "name": "BMS Discharge Current Limit" },
       "bms_charge_voltage_limit": { "name": "BMS Charge Voltage Limit" },

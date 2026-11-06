@@ -103,6 +103,8 @@
       "charging_state": { "name": "Режим работы" },
       "capacity": { "name": "Остаточная емкость" },
       "cycle_count": { "name": "Количество циклов" },
+      "total_charge": { "name": "Заряжено всего" },
+      "total_discharge": { "name": "Разряжено всего" },
       "bms_charge_current_limit": { "name": "BMS Лимит тока заряда" },
       "bms_discharge_current_limit": { "name": "BMS Лимит тока разряда" },
       "bms_charge_voltage_limit": { "name": "BMS Лимит напряжения заряда" },
