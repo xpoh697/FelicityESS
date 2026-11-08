@@ -27,6 +27,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util import dt as dt_util
 
 from .const import (
     DEVICE_TYPE_BATTERY,
@@ -253,6 +254,91 @@ LOCAL_BATTERY_SENSORS: tuple[FelicitySensorEntityDescription, ...] = (
         for key in ("estate", "state", "fault", "warning", "bms_fault", "bms_warning")
     ),
 )
+
+
+# Configuration for cumulative and daily local capacity & energy meters
+LOCAL_METER_CONFIGS: dict[str, dict[str, Any]] = {
+    "daily_discharge_ah": {
+        "name": "Daily Discharged Capacity",
+        "unit": "Ah",
+        "device_class": None,
+        "state_class": SensorStateClass.TOTAL,
+        "precision": 2,
+        "is_daily": True,
+        "is_ah": True,
+        "direction": "discharge",
+    },
+    "daily_charge_ah": {
+        "name": "Daily Charged Capacity",
+        "unit": "Ah",
+        "device_class": None,
+        "state_class": SensorStateClass.TOTAL,
+        "precision": 2,
+        "is_daily": True,
+        "is_ah": True,
+        "direction": "charge",
+    },
+    "daily_discharge_energy": {
+        "name": "Daily Discharged Energy",
+        "unit": UnitOfEnergy.KILO_WATT_HOUR,
+        "device_class": SensorDeviceClass.ENERGY,
+        "state_class": SensorStateClass.TOTAL,
+        "precision": 2,
+        "is_daily": True,
+        "is_ah": False,
+        "direction": "discharge",
+    },
+    "daily_charge_energy": {
+        "name": "Daily Charged Energy",
+        "unit": UnitOfEnergy.KILO_WATT_HOUR,
+        "device_class": SensorDeviceClass.ENERGY,
+        "state_class": SensorStateClass.TOTAL,
+        "precision": 2,
+        "is_daily": True,
+        "is_ah": False,
+        "direction": "charge",
+    },
+    "total_discharge_ah": {
+        "name": "Total Discharged Capacity",
+        "unit": "Ah",
+        "device_class": None,
+        "state_class": SensorStateClass.TOTAL_INCREASING,
+        "precision": 2,
+        "is_daily": False,
+        "is_ah": True,
+        "direction": "discharge",
+    },
+    "total_charge_ah": {
+        "name": "Total Charged Capacity",
+        "unit": "Ah",
+        "device_class": None,
+        "state_class": SensorStateClass.TOTAL_INCREASING,
+        "precision": 2,
+        "is_daily": False,
+        "is_ah": True,
+        "direction": "charge",
+    },
+    "total_discharge": {
+        "name": "Total Energy Discharged",
+        "unit": UnitOfEnergy.KILO_WATT_HOUR,
+        "device_class": SensorDeviceClass.ENERGY,
+        "state_class": SensorStateClass.TOTAL_INCREASING,
+        "precision": 2,
+        "is_daily": False,
+        "is_ah": False,
+        "direction": "discharge",
+    },
+    "total_charge": {
+        "name": "Total Energy Charged",
+        "unit": UnitOfEnergy.KILO_WATT_HOUR,
+        "device_class": SensorDeviceClass.ENERGY,
+        "state_class": SensorStateClass.TOTAL_INCREASING,
+        "precision": 2,
+        "is_daily": False,
+        "is_ah": False,
+        "direction": "charge",
+    },
+}
 
 
 # =========================================================================
@@ -509,16 +595,16 @@ async def async_setup_entry(
         for desc in LOCAL_BATTERY_SENSORS:
             entities.append(FelicityLocalBatterySensor(coordinator, desc, dev_sn, model))
 
-        # 16 Individual cell voltages (enabled by default in entity registry)
+        # 16 Individual cell voltages
         for cell_idx in range(1, 17):
             entities.append(
                 FelicityLocalCellVoltageSensor(coordinator, dev_sn, model, cell_idx)
             )
 
-        # Cumulative energy meters (total_charge and total_discharge for HA Energy Dashboard)
-        for energy_type in ("total_charge", "total_discharge"):
+        # Cumulative and daily capacity/energy meters
+        for meter_type in LOCAL_METER_CONFIGS:
             entities.append(
-                FelicityLocalEnergySensor(coordinator, dev_sn, model, energy_type)
+                FelicityLocalMeterSensor(coordinator, dev_sn, model, meter_type)
             )
 
         async_add_entities(entities)
@@ -648,30 +734,34 @@ class FelicityLocalCellVoltageSensor(CoordinatorEntity[FelicityLocalCoordinator]
         return val
 
 
-class FelicityLocalEnergySensor(CoordinatorEntity[FelicityLocalCoordinator], RestoreSensor):
-    """Sensor for accumulated battery charge/discharge energy over direct local TCP."""
-
-    _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_state_class = SensorStateClass.TOTAL_INCREASING
-    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
-    _attr_suggested_display_precision = 2
+class FelicityLocalMeterSensor(CoordinatorEntity[FelicityLocalCoordinator], RestoreSensor):
+    """Sensor for accumulated battery capacity (Ah) and energy (kWh) over direct local TCP."""
 
     def __init__(
         self,
         coordinator: FelicityLocalCoordinator,
         device_sn: str,
         device_model: str,
-        sensor_type: str,
+        meter_type: str,
     ) -> None:
-        """Initialize local energy sensor."""
+        """Initialize local meter sensor."""
         super().__init__(coordinator)
         self._device_sn = device_sn
-        self._sensor_type = sensor_type
-        self._attr_unique_id = f"local_{device_sn}_{sensor_type}"
-        self._attr_translation_key = sensor_type
-        self._attr_name = (
-            "Total Energy Charged" if sensor_type == "total_charge" else "Total Energy Discharged"
-        )
+        self._meter_type = meter_type
+
+        cfg = LOCAL_METER_CONFIGS[meter_type]
+        self._is_daily: bool = cfg["is_daily"]
+        self._is_ah: bool = cfg["is_ah"]
+        self._direction: str = cfg["direction"]
+
+        self._attr_unique_id = f"local_{device_sn}_{meter_type}"
+        self._attr_translation_key = meter_type
+        self._attr_name = cfg["name"]
+        self._attr_native_unit_of_measurement = cfg["unit"]
+        self._attr_device_class = cfg["device_class"]
+        self._attr_state_class = cfg["state_class"]
+        self._attr_suggested_display_precision = cfg["precision"]
+
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, device_sn)},
             name="Felicity Battery",
@@ -681,25 +771,47 @@ class FelicityLocalEnergySensor(CoordinatorEntity[FelicityLocalCoordinator], Res
         )
         self._state: float = 0.0
         self._last_update_time: float | None = None
+        self._last_reset_date: str = str(dt_util.now().date())
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return entity state attributes."""
+        if self._is_daily:
+            return {"last_reset_date": self._last_reset_date}
+        return None
 
     async def async_added_to_hass(self) -> None:
         """Restore state when entity is added to hass."""
         await super().async_added_to_hass()
+        current_date_str = str(dt_util.now().date())
+
         if (last_sensor_data := await self.async_get_last_sensor_data()) is not None:
             try:
                 self._state = float(last_sensor_data.native_value)
             except (ValueError, TypeError):
-                pass
+                self._state = 0.0
         elif (last_state := await self.async_get_last_state()) is not None:
             try:
                 self._state = float(last_state.state)
             except (ValueError, TypeError):
-                pass
+                self._state = 0.0
+
+        if self._is_daily:
+            last_state = await self.async_get_last_state()
+            restored_date = (
+                last_state.attributes.get("last_reset_date")
+                if last_state and last_state.attributes
+                else None
+            )
+            if restored_date != current_date_str:
+                self._state = 0.0
+            self._last_reset_date = current_date_str
+
         self._last_update_time = time.monotonic()
 
     @callback
     def _handle_coordinator_update(self) -> None:
-        """Handle updated data from the coordinator and integrate energy."""
+        """Handle updated data from the coordinator and integrate capacity/energy."""
         now = time.monotonic()
         if self._last_update_time is None or not self.coordinator.last_update_success:
             self._last_update_time = now
@@ -707,6 +819,14 @@ class FelicityLocalEnergySensor(CoordinatorEntity[FelicityLocalCoordinator], Res
 
         dt = now - self._last_update_time
         self._last_update_time = now
+
+        # Midnight rollover check for daily meters
+        if self._is_daily:
+            current_date_str = str(dt_util.now().date())
+            if self._last_reset_date != current_date_str:
+                self._state = 0.0
+                self._last_reset_date = current_date_str
+                self.async_write_ha_state()
 
         # Spike protection: ignore gaps longer than 2x update interval (or 60s)
         max_gap = (
@@ -725,23 +845,48 @@ class FelicityLocalEnergySensor(CoordinatorEntity[FelicityLocalCoordinator], Res
         if voltage is None or current is None or voltage <= 0:
             return
 
-        power_watts = abs(voltage * current)
-        if power_watts < 5.0:  # noise floor filter
+        # Noise / standby threshold: 0.2A or 5W
+        abs_current = abs(current)
+        power_watts = voltage * abs_current
+        if abs_current < 0.2 or power_watts < 5.0:
             return
 
-        delta_kwh = (power_watts / 1000.0) * (dt / 3600.0)
+        # Determine flow direction
+        is_charging = (charging_state == "charging")
+        is_discharging = (charging_state == "discharging")
 
-        if self._sensor_type == "total_charge" and charging_state == "charging":
-            self._state += delta_kwh
-            self.async_write_ha_state()
-        elif self._sensor_type == "total_discharge" and charging_state == "discharging":
-            self._state += delta_kwh
-            self.async_write_ha_state()
+        if not is_charging and not is_discharging:
+            if self.coordinator.invert_current:
+                is_charging = (current <= -0.2)
+                is_discharging = (current >= 0.2)
+            else:
+                is_charging = (current >= 0.2)
+                is_discharging = (current <= -0.2)
+
+        # Check if this meter matches current direction
+        if self._direction == "charge" and not is_charging:
+            return
+        if self._direction == "discharge" and not is_discharging:
+            return
+
+        # Riemann sum (method: left)
+        hours = dt / 3600.0
+        if self._is_ah:
+            delta = abs_current * hours
+        else:
+            delta = (power_watts / 1000.0) * hours
+
+        self._state += delta
+        self.async_write_ha_state()
 
     @property
     def native_value(self) -> float:
-        """Return the accumulated energy in kWh."""
+        """Return the accumulated value."""
         return round(self._state, 2)
+
+
+# Backwards compatibility alias
+FelicityLocalEnergySensor = FelicityLocalMeterSensor
 
 
 # =========================================================================
