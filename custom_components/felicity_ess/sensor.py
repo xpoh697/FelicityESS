@@ -602,9 +602,18 @@ async def async_setup_entry(
             )
 
         # Cumulative and daily capacity/energy meters
+        meters: dict[str, FelicityLocalMeterSensor] = {}
         for meter_type in LOCAL_METER_CONFIGS:
+            sensor = FelicityLocalMeterSensor(coordinator, dev_sn, model, meter_type)
+            meters[meter_type] = sensor
+            entities.append(sensor)
+
+        # Equivalent full cycles today (derived from daily_discharge_ah / capacity)
+        if "daily_discharge_ah" in meters:
             entities.append(
-                FelicityLocalMeterSensor(coordinator, dev_sn, model, meter_type)
+                FelicityLocalTodayCyclesSensor(
+                    coordinator, dev_sn, model, meters["daily_discharge_ah"]
+                )
             )
 
         async_add_entities(entities)
@@ -883,6 +892,62 @@ class FelicityLocalMeterSensor(CoordinatorEntity[FelicityLocalCoordinator], Rest
     def native_value(self) -> float:
         """Return the accumulated value."""
         return round(self._state, 2)
+
+
+class FelicityLocalTodayCyclesSensor(CoordinatorEntity[FelicityLocalCoordinator], SensorEntity):
+    """Sensor for equivalent full discharge cycles today over direct local TCP."""
+
+    _attr_state_class = SensorStateClass.TOTAL
+    _attr_suggested_display_precision = 2
+
+    def __init__(
+        self,
+        coordinator: FelicityLocalCoordinator,
+        device_sn: str,
+        device_model: str,
+        discharge_sensor: FelicityLocalMeterSensor,
+    ) -> None:
+        """Initialize local today cycles sensor."""
+        super().__init__(coordinator)
+        self._device_sn = device_sn
+        self._discharge_sensor = discharge_sensor
+        self._attr_unique_id = f"local_{device_sn}_today_cycles"
+        self._attr_translation_key = "today_cycles"
+        self._attr_name = "Today Cycles"
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, device_sn)},
+            name="Felicity Battery",
+            manufacturer=MANUFACTURER,
+            model=device_model,
+            serial_number=device_sn,
+        )
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        """Return entity state attributes."""
+        parsed = self.coordinator.data.get("parsed", {})
+        capacity = safe_float(parsed.get("capacity"))
+        discharge_ah = self._discharge_sensor.native_value
+        dod_percent = (
+            round((discharge_ah / capacity) * 100.0, 1)
+            if capacity is not None and capacity > 0
+            else None
+        )
+        return {
+            "daily_discharge_ah": discharge_ah,
+            "nominal_capacity": capacity,
+            "dod_percent": dod_percent,
+        }
+
+    @property
+    def native_value(self) -> float | None:
+        """Return today cycles count."""
+        parsed = self.coordinator.data.get("parsed", {})
+        capacity = safe_float(parsed.get("capacity"))
+        if not capacity or capacity <= 0:
+            return None
+        discharge_ah = self._discharge_sensor.native_value
+        return round(discharge_ah / capacity, 2)
 
 
 # Backwards compatibility alias

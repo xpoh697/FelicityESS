@@ -107,6 +107,7 @@
       "daily_charge_ah": { "name": "Суточный заряд емкости" },
       "daily_discharge_energy": { "name": "Суточный разряд энергии" },
       "daily_charge_energy": { "name": "Суточный заряд энергии" },
+      "today_cycles": { "name": "Циклы за сегодня" },
       "total_discharge_ah": { "name": "Разряжено емкости всего" },
       "total_charge_ah": { "name": "Заряжено емкости всего" },
       "total_charge": { "name": "Заряжено всего" },

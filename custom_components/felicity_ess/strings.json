@@ -107,6 +107,7 @@
       "daily_charge_ah": { "name": "Daily Charged Capacity" },
       "daily_discharge_energy": { "name": "Daily Discharged Energy" },
       "daily_charge_energy": { "name": "Daily Charged Energy" },
+      "today_cycles": { "name": "Today Cycles" },
       "total_discharge_ah": { "name": "Total Discharged Capacity" },
       "total_charge_ah": { "name": "Total Charged Capacity" },
       "total_charge": { "name": "Total Energy Charged" },
